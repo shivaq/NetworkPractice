@@ -1,0 +1,23 @@
+# Sample Tasks File
+
+---
+-
+  firewalld:
+    permanent: true
+    service: httpd
+    state: enabled
+-
+  firewalld:
+    permanent: true
+    port: "{{http_port}}/tcp"
+    state: disabled
+-
+  firewalld:
+    permanent: true
+    port: "{{snmp_port}}/udp"
+    state: disabled
+-
+  firewalld:
+    Zone: internal
+    source: "{{inter_ip_range}}/24"
+    state: enabled

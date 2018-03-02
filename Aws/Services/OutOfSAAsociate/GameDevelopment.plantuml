@@ -1,0 +1,6 @@
+@startuml
+
+actor GameLift
+/'普通のゲームからVRゲームまで、開発をサポート'/
+
+@enduml

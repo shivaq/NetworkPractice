@@ -1,0 +1,13 @@
+Playbook が肥大化しないよう、モジュール化する
+
+機能別に Playbook を分ける
+# provision_vms.yml
+# install_dependencies.yml
+# configure_web_server.yml
+# setup_start_application.yml
+
+一つのPlaybook から、モジュール化された Playbook を参照する
+- include provision_vms.yml
+# - include install_dependencies.yml
+# - include configure_web_server.yml
+# - include setup_start_application.yml

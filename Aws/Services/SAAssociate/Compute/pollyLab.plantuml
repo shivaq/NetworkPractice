@@ -1,0 +1,44 @@
+@startuml
+
+actor user
+
+usecase S3_WebSite
+note right:ノート書き込み
+user --> S3_WebSite
+
+rectangle ノートを登録{
+  usecase APIGateway2
+  usecase Lambda_NewPost
+
+  S3_WebSite --> APIGateway2 : ノートをプッシュ
+  APIGateway2 --> Lambda_NewPost:Lambda をトリガー
+}
+usecase AmazonSNS
+Lambda_NewPost -->AmazonSNS:SNSイベントをトリガー
+usecase Lambda_Convert2Audio
+AmazonSNS --> Lambda_Convert2Audio:Lambda をトリガー
+
+usecase DynamoDB
+
+Lambda_NewPost --> DynamoDB:ノートをDBに格納
+
+usecase Polly
+
+Lambda_Convert2Audio --> Polly:ノートを取得し Polly に渡す
+Polly --> Lambda_Convert2Audio:MP3 を返す
+usecase S3Bucket
+Lambda_Convert2Audio --> S3Bucket:MP3 を保存
+Lambda_Convert2Audio --> DynamoDB:MP3 へ変換した旨更新
+
+
+
+rectangle ノートを検索{
+  usecase APIGateway1
+  usecase Lambda_GetPost
+  S3_WebSite --> APIGateway1:ノートを検索
+  APIGateway1 --> Lambda_GetPost:Lambda をトリガー
+  Lambda_GetPost --> DynamoDB:DBをスキャン
+  DynamoDB --> S3_WebSite: ノートを返す
+}
+
+@enduml

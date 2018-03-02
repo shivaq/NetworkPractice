@@ -1,0 +1,22 @@
+
+# 例
+# -------------------------------------------------
+# Dictionary と その key:value たち。順番は関係ない
+Employee:
+  Name: Jacob
+  Sex: Male
+  Age: 30
+  Title: sss
+# - で表現される個々のアイテムを抱えるのが、リスト
+# - 内の要素の順番が変わると、実行される順番が変わる
+  Projects:
+    - Auto
+    - Supp
+  Payslips:
+    - Month: July
+      Wage: 4000
+    - Month: June
+      Wage: 4500
+    - Month: August
+      Wage: 4000
+# -------------------------------------------------

@@ -1,0 +1,37 @@
+---
+
+- name: Set up /etc/hosts.
+  template:
+    src: "{{ item }}"
+    dest: /etc/hosts
+    owner: root
+    group:  "{{ hosts_file_group }}"
+    mode: 0644
+  with_first_found:
+    - files:
+        - hosts.j2
+      paths:
+        - ../templates
+
+- name: Test shell
+  shell: uptime
+
+- name: Reboot hosts
+  # Send the reboot command
+  shell: shutdown -r now
+
+- name: Wait for SSH port down
+  local_action: wait_for host={{ inventory_hostname }} port=22 state=stopped
+
+- name: Wait for SSH port up
+  wait_for: host={{ inventory_hostname }} port=22 state=started delay=30
+
+  # Ping to the host until it returns
+- local_action: shell ansible -m ping {{ inventory_hostname }}
+  register: result
+  until: result.rc == 0
+  retries: 30
+  delay: 10
+
+  # Execute this when the host is back
+- shell: uptime

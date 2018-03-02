@@ -1,0 +1,24 @@
+@startuml
+
+
+actor CodeStar
+/'コードを数分以内にリリース →他の開発者とコラボレート
+'/
+actor CodeCommit
+/'pribvate な Git レポジトリなどを保存する場所 '/
+actor CodeBuild
+/'コードのコンパイル、テストを行って、built してパッケージにしてくれる'/
+actor CodeDeploy
+/'アプリのデプロイ自動化。
+Lambda と オンプレミスとで、二つのインスタンスをデプロイしたり'/
+actor CodePipeline
+/'リリースの自動化とか'/
+actor X-Ray
+/'サービスやアプリのデバッグ、分析'/
+actor Cloud9
+/'IDE
+Webブラウザさえあれば、コードを書ける
+'/
+actor test
+/''/
+@enduml

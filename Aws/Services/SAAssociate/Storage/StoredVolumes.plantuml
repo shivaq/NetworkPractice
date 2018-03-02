@@ -1,0 +1,52 @@
+@startuml
+left to right direction
+
+skinparam usecase {
+  BackgroundCOlor<< Cached >> Pink
+}
+actor users
+actor clientPC
+
+users <--> clientPC
+
+rectangle DataCenter {
+  usecase ApplicationServer
+  note right:INITIATOR
+
+
+
+rectangle Storage{
+  usecase StorageAreaNetwork
+  usecase NetworkAttachedStorage
+  usecase DirectAttachedStorage
+  rectangle Host {
+    rectangle GatewayVM {
+      usecase VolumeStorage
+      note bottom:TARGET
+      usecase UploadBUffer
+      note bottom:TARGET
+      usecase CacheStorage<< Cached >>
+      note bottom:TARGET
+    }
+    ApplicationServer <--> clientPC
+    ApplicationServer <--> VolumeStorage:iSCSI
+    ApplicationServer <--> CacheStorage:iSCSI
+    VolumeStorage <--> UploadBUffer
+    CacheStorage <--> UploadBUffer
+  }
+}
+VolumeStorage --> StorageAreaNetwork
+VolumeStorage --> NetworkAttachedStorage
+VolumeStorage --> DirectAttachedStorage
+
+
+}
+
+rectangle AmazonS3{
+  usecase VolumeStorageForCachedStorage<< Cached >>
+  usecase EBSsnapshots
+  EBSsnapshots <--> UploadBUffer:非同期増分バックアップ
+  EBSsnapshots <--> VolumeStorageForCachedStorage
+  VolumeStorageForCachedStorage <--> UploadBUffer:非同期増分バックアップ
+}
+@enduml

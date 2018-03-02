@@ -1,0 +1,19 @@
+@startuml
+
+
+actor Connect
+/'ContactCenter As a Service
+クラウド上のコールセンター'/
+actor SimpleEmailService
+/'大量のメールを効率的に、コストエフェクティブに送信'/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml

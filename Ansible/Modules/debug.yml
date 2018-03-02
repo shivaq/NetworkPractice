@@ -1,0 +1,17 @@
+▼ デバッグ
+-------------------------------------------------
+dry run
+// 注意！全てのモジュールがチェックモードを扱っているわけではない。
+// 事前に "扱っていること" を確認した上で走らせること。
+// playbook を verify するために、シミュレーションモードで走らせる
+// ansible-playbook some.yml --check
+
+// - name: copy web files
+//   copy: src=index.html dest=/var/www/html/
+タスクの出力結果を変数に格納
+  // register: copy_status
+
+// - name: Print uptime
+実行時に、値を標準出力
+  // debug: var=copy_status
+-------------------------------------------------

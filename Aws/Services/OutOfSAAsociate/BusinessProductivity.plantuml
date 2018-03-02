@@ -1,0 +1,17 @@
+@startuml
+
+actor AlexaForBusiness
+/'アレクサだから色々できる'/
+actor Chime
+/'ビデオコンフェレンスとかで使う。テレビ電話'/
+actor WorkDocs
+/'AWS 用 Dropbox'/
+actor WorkMail
+/'Office365的なやつ'/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml

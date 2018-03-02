@@ -1,0 +1,23 @@
+@startuml
+
+actor AWS_Migration_Hub
+/'Tracking サービス
+Migrate する際に、アプリケーションを トラッキングし、
+Migration フレームワーク内の他のサービスと統合する
+DB や Server をmigrateする際に、その経緯を可視化
+'/
+
+actor Application_Discovery_Servicd
+/'自動化ツール？
+所持アプリを検知 ＋ 依存関係を検知
+例）
+SharePointServer を取り扱うとして、
+SQL や ドメインコントローラへの依存関係を検知
+ * Microsoft の グループウェアやエンタープライズコンテンツ管理の機能を提供するサーバー
+'/
+
+actor Database_Migration_Service
+/'DB を on premise から AWS に簡単移行'/
+actor Server_Migration_service
+actor Snowball
+@enduml

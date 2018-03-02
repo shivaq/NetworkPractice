@@ -1,0 +1,44 @@
+@startuml
+
+
+actor Athena
+/'SQLのクエリを 3 バケツに投げる
+エクセルのスプレッドシートが入っていたとして、
+それぞれのバケツから、例えば従業員名とかをクエリできたりする。
+
+'/
+actor EMR
+/'ElasticMapReduce
+大量のデータ処理に使われる。
+データをあれこれして分析'/
+actor CloudSearch
+/'検索'/
+actor ElasticSearchService
+/'検索'/
+actor Kinesis
+/'大量のデータをAWS に注入する
+SNS のフィードやツイートなど'/
+actor KinesisVideoStreams
+/'動画版 Kinesis'/
+actor QuickSight
+/'BIツール。ビジネスインテリジェンス
+競合サービスと比べてすごく安い'/
+actor DataPipeline
+/'異なるAWSサービス間でデータをやりとりする'/
+actor Glue
+/'ETL を扱う
+Extract、Transform、Loadの略
+複数のシステムの、フォーマットの異なるデータを抽出し、
+好きなデータフォーマットに加工する
+
+企業内に存在する複数のシステムからデータを抽出し、
+抽出したデータを変換／加工した上でデータウェアハウス等へ渡す処理、
+およびそれを支援するソフトウェア
+'/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml

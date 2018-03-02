@@ -1,0 +1,40 @@
+@startuml
+
+
+actor CloudWatch
+/'モニタリング'/
+actor CloudFormation
+/'インフラのスクリプトを書く
+OS のインストールや様々な コンフィグ
+テンプレートを色んな人が展開してるから、それを使える'/
+actor CloudTrail
+/'AWS 上で行った Modification のロギングをする'/
+actor Config
+/'AWS 上のすべての Config をモニターし、
+スナップショットを生成してる。'/
+actor OpsWork
+/'Elastic_Beanstalk によく似てるが、より堅牢
+コンフィグを管理
+環境の自動化にchef と puppet を使う'/
+actor ServiceCatalog
+/'使用許可が出てるITサービスを管理したりする。
+VM、OS、DBなどなどなど。
+大企業が、ガバナンスやコンプライアンスの観点から使用する感じ'/
+actor SystemsManager
+/'AWS のリソースをマネージ。
+パッチのメンテナンスとかに使える。
+すべての EC2 に、セキュリティパッチをロールアウトするとか
+異なる部署や、アプリのリソースをグループ化したり。'/
+actor Trusted_Advisor
+/'セキュリティ関連のアドバイスをしてくれる。
+ポートが開きっぱなしだよ、とか。
+使ってないAWSサービスがあって、そこでお金使っちゃってるよ、とか'/
+actor ManagedServices
+/'オートスケールとかに使う'/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml

@@ -1,0 +1,18 @@
+---
+- hosts: ansible_controller
+  tasks:
+    - name: Installing software-properties-common
+      apt: name=software-properties-common state=installed update_cache=yes
+
+    - name: Add ansible repository
+      apt_repository: repo='ppa:ansible/ansible'
+
+    - name: Installing ansible
+      apt: name=ansible state=installed update_cache=yes
+
+    - name: Enableing ssh without host_key_checking
+      replace:
+        path: /etc/ansible/ansible.cfg
+        regexp: '#host_key_checking = False'
+        replace: 'host_key_checking = False'
+        backup: yes

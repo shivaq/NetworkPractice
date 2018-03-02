@@ -1,0 +1,23 @@
+@startuml
+
+actor RDS
+/'Relational Database Service
+Amazon バージョンの MySQL →Aurora
+PostgreSQL との互換性あり
+オブジェクト関係データベース管理システム
+'/
+actor DynamoDB
+/'Non Relational Database
+'/
+actor Elasticache
+/'DB サーバからクエリした結果をキャッシュしておく
+人気Top10製品のデータをここに格納しておくとか。
+結果、元のDBは他の事に処理能力を使える
+'/
+actor RedShift
+/'Data warehousing or business intelligence
+Data ウェアハウス 異なるデータリソースをまとめるレポジトリ。
+ビジネスインテリジェンス の要となるコンポーネント
+JOIN をたくさん使ったりと、
+複雑なクエリに使える。今期の利益を計算とか。'/
+@enduml

@@ -1,0 +1,9 @@
+-
+  name: Set Firewall configuration
+  hosts: web
+  vars_files:
+    # include key は不要
+    - variables.yml
+  tasks:
+    # task を include
+    - include: tasks.yml

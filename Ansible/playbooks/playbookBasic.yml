@@ -1,0 +1,125 @@
+# Playbook →Play のセットを、
+# Dictionary の リストとして定義した、YAML ファイル自体を指す
+
+▼ドキュメント
+-------------------------------------------------
+モジュールについては記憶しておいたほうがいい。
+引数については、つどつど ドキュメントを見るようにした方がいい
+
+選択肢も下記のようにかいてある
+(Choices: latest, absent, present, build-dep)[Default: present]
+# -------------------------------------------------
+
+
+
+
+
+▼ playbook の書き方
+-------------------------------------------------
+まずは スケルトンから書き始める。psedu コード的なやつ
+-------------------------------------------------
+# 普通の英語でまずは箇条書き
+---
+- hosts: web_portal
+  tasks:
+    - name: Apt get update
+    - name: instal apache2
+    - name: copy data files
+-------------------------------------------------
+各タスクに入っていく。
+モジュールの引数とかを ドキュメントで調べる
+# ---
+# - hosts: web_portal
+#   tasks:
+#     - name: Apt get update
+#       yum: update_cache=yes
+    - name: instal apache2
+      yum: name=httpd update_cache=no
+    # - name: copy data files
+    #   copy:
+-------------------------------------------------
+やりたい処理が、どのモジュールでできるかわからない時は、
+モジュールリストから検索する
+# ansible-doc -l | grep install
+-------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+---
+  # Play →ホストに対して実行されるタスクのセット
+  name: Execute a date command on localhost
+  # hosts に指定可能なのは、inventory ファイルで定義されたファイルのみ
+  hosts: localhost
+
+  # tasks →ホストに対して実行されるアクション
+  # ・コマンド実行
+  # ・スクリプトを走らせる
+  # ・パッケージインストール
+  # ・再起動とか
+  tasks:
+    -
+      name: Execute a date command
+      # Module → タスク内の、それぞれのアクションを表す単位
+      # command:, script:, yum:, service:,etc...
+      # ansible-doc -l で、Module たちを確認できる
+      command: date
+
+-
+  name: Stop web services on web servers
+  hosts: web_nodes
+  tasks:
+    - name: Stop httpd
+      command: service httpd stop
+
+
+# -------------------------------------------------
+変数
+---
+- hosts: demo_hosts
+  vars:
+    package1 : "nginx"
+    package2 : "wget"
+  # tasks:
+  #   - name: Installing package nginx
+  #     apt: pkg=nginx state=installed update_cache=true
+  #     become: true
+  #   - name: Installing wget
+    # 変数適用 ディストリビューションによって、apt ではなく yum だったりするので注意
+      apt: name={{ package2 }} state=installed update_cache=true
+      become: true
+# -------------------------------------------------
+デバッグ
+      - name: copy web files
+        copy: src=index.html dest=/var/www/html/
+        # 出力を変数に格納
+        register: copy_status
+
+      - name: Print uptime
+        # playbook を走らせる際に、下記値を出力
+        debug: var=copy_status
+# -------------------------------------------------
+条件分岐
+      - name: Testing conditional
+        shell: uptime
+        when: ansible_hostname == "nodeUbuntu02"
+# -------------------------------------------------
+do while
+
+      # - name: Testing untill
+      #   shell: service apache2 status
+      #   register: result
+
+      # サービスのステータスが runnning ではない ( - 1 ) 間、
+      # リトライを ５回
+        until: result.stdout.find("active (running)") != -1
+        retries: 5
+        delay: 5
+# -------------------------------------------------

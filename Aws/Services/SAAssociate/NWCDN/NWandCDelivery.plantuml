@@ -1,0 +1,26 @@
+@startuml
+Title:Networking & Content Delivery
+actor VPC
+/'Amazon Virtual Private Cloud
+Virtual Data Center みたいなもの
+設定できるもの
+・FireWall
+・Available Zone
+・Network サイドのアドレス範囲
+・ACL、Route Tableなどなどなど
+'/
+
+actor CloudFront
+/'Amazon の Content Delivery Network
+Media Assets Movie や image などを格納して、
+エッジにキャッシュしたりする
+'/
+actor Route53
+/'Amazon の DNS
+'/
+actor API_Gateway
+/''/
+actor Direct_Connect
+/'専用線みたく、HQ などと Amazon とを VPC で直接つなぐ'/
+
+@enduml

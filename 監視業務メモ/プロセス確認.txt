@@ -1,0 +1,48 @@
+■LISTEN のポート確認
+LISTENとなっているポートは、ポートが開いている状態、つまり接続を受け付ける状態にある
+
+ポートを開いているのは、サービスを提供しているプロセス（アプリケーション）
+
+ポートがLISTEN状態にあるということは、そのポートを開いているプロセスが必ず存在
+
+netstat -anp | grep "listen "
+netstat -tnpa | grep LISTEN
+-a　接続待ち状態にあるソケットも、接続待ち状態にないソケットも表示する。
+-n　ホスト・ポート・ユーザーなどの名前を解決せずに、数字のアドレスで表示する。
+-p　各ソケットが属しているプログラムの PID と名前が表示される。
+
+■TCP接続をリッスンしているポートを特定
+nmap -sT -O localhost
+
+■プロセスの名前確認
+netstat -p | grep "22"
+
+lsof -i:22
+
+■プロセスツリー
+pstree -anhp
+a  ⇒全部
+n  ⇒PIDでソート
+h  ⇒カレントプロセスとその先祖のプロセスを強調表示
+p  ⇒PIDを表示
+
+■コマンド使えるかどうか確認
+which lsof
+ls -l /usr/sbin/lsof
+
+■矢印キーが使えない時
+Ctrl+[aebfpnu]
+alt+D
+
+■ファイルを探す
+find /etc -name httpd
+
+■プロセスの起動時刻（秒まで）
+ps -eo lstart,pid,args
+
+Sat Jun 27 11:56:31 2015   1449 crond
+
+lstart  ⇒コマンドが実行された日時
+pid     ⇒プロセスID
+args    ⇒コマンドと引数。cmd, commandと同義
+

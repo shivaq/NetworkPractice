@@ -1,0 +1,37 @@
+@startuml
+
+
+actor User
+usecase AWS_Management_Console
+User -- AWS_Management_Console
+
+rectangle オンプレミスアプライアンス {
+  rectangle DataCenter {
+    usecase HyperV
+    usecase ESXi
+    usecase StorageGateway
+    usecase VM
+
+    VM <|-- HyperV
+    VM <|-- ESXi
+  }
+
+}
+
+
+
+VM <-- StorageGateway:installed
+note right:コストエフェクティブにセキュアに
+
+
+
+rectangle AWS {
+  usecase Storage
+  usecase S3
+  usecase Glacier
+  Storage <|-- S3
+  Storage <|-- Glacier
+  AWS_Management_Console --> Storage
+}
+  StorageGateway --> Storage:非同期複製
+@enduml

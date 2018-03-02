@@ -1,0 +1,33 @@
+@startuml
+
+actor Client
+actor OHC
+
+rectangle onPremise {
+  usecase オンプレミスのNW as opNw
+  Client .. opNw
+}
+
+rectangle AWS_Global_Network {
+  usecase AWSNetwork
+  rectangle Region {
+    rectangle AvailabilityZone {
+      rectangle EdgeLocations {
+        usecase CloudFront
+        usecase CDN
+        usecase cacheCDN
+
+        cacheCDN <.. CDN:<<extend>>
+        Client -- AWSNetwork
+      }
+      OHC -- AWSNetwork
+    }
+
+  }
+}
+
+
+opNw --> AWSNetwork:移行
+AWSNetwork --|> cacheCDN
+CloudFront --|> CDN
+@enduml

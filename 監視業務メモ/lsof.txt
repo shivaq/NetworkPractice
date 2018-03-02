@@ -1,0 +1,34 @@
+FD – Represents the file descriptor. Some of the values of FDs are,
+
+cwd – Current Working Directory
+txt – Text file
+mem – Memory mapped file
+mmap – Memory mapped device
+NUMBER – Represent the actual file descriptor. The character after the number i.e ‘1u’, represents the mode in which the file is opened. r for read, w for write, u for read and write.
+
+>REG - Regular file 
+>DIR - Directory
+>CHR - Character special file
+>FIFO - First in first out
+
+■特定のファイルを開いているプロセスを特定
+lsof /var/log/syslog
+
+■特定のディレクトリ配下のオープンファイル
+lsof +D /var/log/
+
+■特定のプロセス名のオープンファイル
+lsof -c ssh
+
+■unmount できない時、そこで動いているプロセスを特定
+lsof /home
+
+■すべてのネットワーク接続
+lsof -i
+
+■特定のプロセスが使っている接続
+lsof -i -a -c ssh
+lsof -i -a -p 1486
+
+■NFSファイルのリストアップ
+lsof -N

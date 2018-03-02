@@ -1,0 +1,6 @@
+@startuml
+
+actor Sumerian
+/'コード書けなくても、VR/AR 用 ３DCG を作れる'/
+
+@enduml

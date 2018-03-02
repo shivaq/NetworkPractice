@@ -1,0 +1,42 @@
+@startuml
+
+actor IAM
+/'Identity access management
+'/
+
+actor Cognito
+/'デバイスの認証
+Facebook や Gmail やらで一度認証したら、
+Cognito を使って AWS のリソースへの 一時的なアクセスを取得する'/
+actor GuardDuty
+/'AWS アカウントに対するマリシャスな行為をモニター'/
+actor Inspector
+/'エージェント。VMやPCにインストールして、
+EC2 に脆弱性がないかとか、テストする。
+定期テストをスケジュールして、レポートを生成とか'/
+actor Macie
+/'S3バケツをスキャンして、
+個人情報が入っていれば警告する'/
+actor CertificateManager
+/'AWS を使っていて、Route53 でドメインを取得していれば、SSL証明書を無料で取得できる'/
+actor CloudHSM
+/'HardwareSecurityModule
+秘密鍵を格納できる小さなHW
+これを使って EC2 インスタンスとかにアクセスできる。
+1時間 20ドル でリースしてる'/
+actor DirectoryService
+/'Microsoft ActiveDirectory をAWS に統合する'/
+actor WAF
+/'WebApplicationFirewall
+レイヤー７ FW
+SQLインジェクション、クロスサイトスクリプティングなどを防ぐ
+ユーザーを監視して、マリシャスかどうかを判定'/
+actor Shield
+/'DDOS を防ぐ。DDOS されたらペイバック'/
+actor Artifact
+/'監査とコンプライアンスに。
+オンデマンドで
+SOCコントロールやAWSコンプライアンスレポートをDL可能。
+ServiceOrganizationControl'/
+
+@enduml

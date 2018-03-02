@@ -1,0 +1,28 @@
+サービスの start, stop, restart を行う
+
+# Example action to start service httpd, if not running
+- service:
+    name: httpd
+    # なぜ start ではなく、started なのか
+    # ansible に、start 状態である事を保証させる、といったニュアンスの命令
+    # これが、idempotency
+    state: [started,stopped,restarted,reloaded]
+
+# Example action to enable service httpd, and not touch the running state
+- service:
+    name: httpd
+    enabled: yes
+
+# こういう書き方も可能
+- service: name=postgresql state=started
+# Example action to start service foo, based on running process /usr/bin/foo
+- service:
+    name: foo
+    pattern: /usr/bin/foo
+    state: started
+
+# Example action to restart network service for interface eth0
+- service:
+    name: network
+    state: restarted
+    args: eth0

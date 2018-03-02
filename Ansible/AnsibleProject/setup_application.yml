@@ -1,0 +1,6 @@
+-
+  name: Set Firewall Configurations
+  hosts: web
+  # 正規のディレクトリ構成になっていれば、自動的にタスクや変数などを設定できる
+  roles:
+    - webservers

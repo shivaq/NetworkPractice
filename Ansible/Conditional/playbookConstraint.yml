@@ -1,0 +1,40 @@
+-
+  name: Start services
+  hosts: all_servers
+  tasks:
+    - service: name=mysql state=started
+      when: ansible_host == "db.company.com"
+
+    - service: name=httpd state=started
+    # or で追記
+      when: ansible_host == "server1.company.com" or
+            ansible_host == "server2.company.com"
+# -------------------------------------------------
+
+
+
+-
+  name: Check status of services and email if its down
+  hosts: localhost
+  tasks:
+    - command: service httpd status
+    # 上記コマンドの出力を下記変数の stdout key に格納
+      register: command_output
+
+    - mail:
+        to: Admins <sys.admin@company.com>
+        subject: Service Alert
+        body: 'Service {{ ansible_hostname }} is down.'
+        #
+      when: command_output.stdout.find('down') != -1
+# -------------------------------------------------
+-
+  # name: Add name server entry if not already entered
+  # hosts: localhost
+  # tasks:
+  #   - shell: cat /etc/resolv.conf
+  #     register: command_output
+  #
+  #   -
+      shell: echo "nameserver 10.0.250.10" >> /etc/resolv.conf
+      when: command_output.stdout.find('10.0.250.10') == -1

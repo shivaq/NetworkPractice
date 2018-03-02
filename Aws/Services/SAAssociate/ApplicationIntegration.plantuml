@@ -1,0 +1,18 @@
+@startuml
+
+actor StepFunctions
+/'異なる Lambda 機能を異なるステップで実行'/
+actor AmazonMQ
+/'MessegeQueue
+'/
+actor SNS
+/'通知サービス
+課金量が閾値超えたら通知とか。'/
+actor SQS
+/''/
+actor SWF
+/'SimpleWorkFlow
+Amazonで注文したら、
+Amazonの倉庫でシンプルなワークフロージョブが生成される'/
+
+@enduml

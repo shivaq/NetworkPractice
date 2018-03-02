@@ -1,0 +1,53 @@
+Playbook 内で変数を定義
+# -------------------------------------------------
+# 変数を利用 Jinja2 Templating と呼ばれる表現 {{  }}
+センテンス内に変数が使用されている場合、""で囲まなくてもいい
+# source: Something{{ inter_ip_range }}Something
+# -------------------------------------------------
+# -
+#   name: Update nameserver entry into resolv.conf file on localhost
+#   hosts: localhost
+  vars:
+    car_model: BMW M3
+    country_name: USA
+    title: Systems Engineer
+  # tasks:
+  #   -
+  #     name: Print my car model
+      command: echo "My car's model is {{car_model}}"
+    #
+    # -
+    #   name: Print my country
+    #   command: echo "I live in the {{country_name}}"
+    #
+    # -
+    #   name: Print my title
+    #   command: echo "I work as a {{title}}"
+# -------------------------------------------------
+
+
+ホスト名にならったファイル名のファイル内で定義された変数を参照
+
+-
+  name: Firewall の設定をセット
+  hosts: web_user
+  tasks:
+    - firewalld:
+      service: https
+      permanent: true
+      state: enabled
+
+    - firewalld:
+      port: '{{http_port}}'/tcp
+      permanent: true
+      state: disabled
+
+    - firewalld:
+      port: '{{snmp_port}}'/udp
+      permanent: true
+      state: disabled
+
+    - firewalld:
+      port: '{{inter_ip_range}}'/24
+      Zone: internal
+      state: enabled

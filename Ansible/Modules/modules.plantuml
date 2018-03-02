@@ -1,0 +1,83 @@
+@startuml
+partition System {
+    usecase User
+    usecase Group
+    usecase Hostname
+    usecase Iptables
+    usecase Lvg
+    usecase Lvol
+    usecase Make
+    usecase Mount
+    usecase Ping
+    usecase Timezone
+    usecase Systemd
+    usecase Service
+}
+
+partition Commands {
+  usecase Command
+  usecase Expect
+  usecase Raw
+  usecase Script
+  usecase Shell
+}
+
+partition Files {
+  usecase Acl
+  usecase Archive
+  usecase Copy
+  usecase File
+  usecase Find
+  usecase Lineinfile
+  usecase Replace
+  usecase Stat
+  usecase Template
+  usecase Unarchive
+}
+
+partition Database {
+  usecase Mongodb
+  usecase Mssql
+  usecase Mysql
+  usecase Postgresql
+  usecase Proxysql
+  usecase vertica
+}
+
+partition Cloud {
+  usecase Amazon
+  usecase Atomic
+  usecase Azure
+  usecase Centrylink
+  usecase Cloudscale
+  usecase Cludstack
+  usecase Digital Ocean
+  usecase Docker
+  usecase Google
+  usecase Linode
+  usecase Openstack
+  usecase Rackspace
+  usecase Smartos
+  usecase Softlayer
+  usecase VMware
+}
+
+partition Windows {
+  usecase Win_copy
+  usecase Win_command
+  usecase Win_domain
+  usecase Win_file
+  usecase Win_iis_website
+  usecase Win_msg
+  usecase Win_msi
+  usecase Win_package
+  usecase Win_ping
+  usecase Win_path
+  usecase Win_robocopy
+  usecase Win_regedit
+  usecase Win_shell
+  usecase Win_service
+  usecase Win_user
+}
+
+@enduml

@@ -1,0 +1,32 @@
+@startuml
+
+actor MobileHub
+/'管理コンソール
+モバイルアプリ内に AWS サービスをセットアップできる
+クラウドコンフィグファイルを生成したり、
+AWS モバイル SDK でアプリと AWS のバックエンドとを接続できる'/
+actor PinPoint
+/'ターゲットプッシュ通知'/
+actor AWSAppSync
+/'Web とモバイルアプリのデータを自動更新
+オフラインになっても、オンラインになったら即更新
+'/
+actor DeviceFarm
+/'リモートにあるデバイスでテストできる'/
+actor MobileAnalytics
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml

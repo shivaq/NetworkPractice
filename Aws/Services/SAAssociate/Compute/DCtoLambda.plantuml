@@ -1,0 +1,58 @@
+@startuml
+left to right direction
+actor user
+usecase Code
+usecase CommandLine
+
+usecase tel_mail
+
+
+rectangle Lambda{
+
+
+rectangle EC2_Container_Service{
+
+rectangle Elastic_Beanstalk_PAAS{
+  rectangle EC2_IAAS{
+    rectangle DataCenter{
+
+      usecase HW
+      usecase Switch
+      usecase Router
+      HW <|-- Switch
+      HW <|-- Router
+    }
+
+
+    usecase VM
+    HW <-- VM
+  }
+      usecase Server
+      usecase WebServer
+      usecase DBServer
+      Server <|-- WebServer
+      Server <|-- DBServer
+      VM <-- Server
+
+}
+}
+
+usecase 負荷
+usecase コンテナデプロイ
+usecase スケールアウト
+usecase OS
+note right:これらの管理って、どのレベルの管理？
+usecase Disk
+負荷 <|--スケールアウト
+Server <-- 負荷
+HW <-- OS
+HW <-- Disk
+}
+
+user -- tel_mail
+tel_mail -- HW
+
+user -- Code
+Code -- CommandLine
+CommandLine -- Server
+@enduml

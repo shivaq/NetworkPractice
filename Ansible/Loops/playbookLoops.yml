@@ -1,0 +1,24 @@
+-
+  # name: Install Packages
+  # hosts: localhost
+  # tasks:
+    # with_items キーの values をループ
+    - yum: name='{{item}}' state=present
+    with_items:
+      - httpd
+      - binutils
+      - glibc
+      - ksh
+# -------------------------------------------------
+# -
+#   hosts: localhost
+  fruits:
+    - Apple
+    - Banana
+    - Grapes
+    - Orange
+  tasks:
+    -
+      command: echo '{{item}}'
+      # 既存の YAML リストの要素をループ
+      with_items: "{{ fruits }}"

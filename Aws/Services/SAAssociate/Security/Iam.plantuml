@@ -1,0 +1,60 @@
+@startuml
+left to right direction
+Title IAM- Identity Access Management
+actor User
+'エンドユーザー'
+actor Groups
+Groups <-- User
+actor EC2
+actor Roles
+Roles <-- EC2
+actor Policies
+Groups <-- Policies
+Roles <-- Policies
+
+actor webOrMobileApp
+
+rectangle IAM{
+  'Identity access management'
+
+    usecase DB
+    usecase DynamoDB
+    usecase S3
+DB <|-- DynamoDB
+DB <|-- S3
+
+usecase 認証 as auth
+  '---------------------'
+  usecase tempAccess
+  webOrMobileApp -- tempAccess
+auth <|-- tempAccess
+
+  DB -- auth
+  '---------------------'
+  usecase PasswordRotationPolicy
+
+  auth <-- Roles
+  auth <-- Groups
+
+  rectangle ID{
+    usecase IdentityFederation as if
+    usecase ActiveDirectory as ad
+    usecase FacebookAuth as fa
+    usecase SAML
+    note right:SecurityAssertionMarkupLanguage
+    if <|-- ad
+    if <|-- fa
+    if <|-- SAML
+    auth <|-- if
+  }
+  usecase MultiFactorAuth
+  note right:スマホで認証してからログインとか
+auth <|-- MultiFactorAuth
+}
+
+
+
+
+
+
+@enduml

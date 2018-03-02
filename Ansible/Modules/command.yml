@@ -1,0 +1,26 @@
+command モジュールは 環境変数にアクセスできない
+# shell モジュールはできる
+
+
+# -------------------------------------------------
+tasks:
+- name: Display resolv.conf contents
+  command: cat /etc/resolv.conf
+
+- name: Display resolv.conf contents
+# ディレクトリ移動してから、コマンド実行
+  command: cat resolv.conf chdir=/etc
+# -------------------------------------------------
+# /folder というディレクトリがあるかチェック。
+ # →ない場合のみ、コマンド実行
+  command: mkdir /folder creates=/folder
+
+# arg を使って引数指定
+- name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
+  command: /usr/bin/make_database.sh arg1 arg2
+  args:
+    # ディレクトリ移動
+    chdir: somedir/
+     # →下記ディレクトリがない場合のみ、コマンド実行
+    creates: /path/to/database
+-------------------------------------------------

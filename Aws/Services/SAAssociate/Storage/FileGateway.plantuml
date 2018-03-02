@@ -1,0 +1,32 @@
+@startuml
+
+rectangle CustomerPremises {
+  usecase ApplicationServer
+  usecase StorageGateway
+  note right:ただのVM
+  ApplicationServer --> StorageGateway:NFS
+}
+
+rectangle Network {
+  usecase DirectConnect
+  usecase Internet
+  usecase AmazonVPC
+
+  StorageGateway --> DirectConnect
+  StorageGateway --> Internet
+  StorageGateway --> AmazonVPC
+}
+
+rectangle AWS {
+  usecase S3
+  usecase S3_IA
+  usecase Glacier
+
+  DirectConnect --> S3
+  Internet --> S3
+  AmazonVPC --> S3
+
+  S3 --> S3_IA
+  S3_IA --> Glacier
+}
+@enduml

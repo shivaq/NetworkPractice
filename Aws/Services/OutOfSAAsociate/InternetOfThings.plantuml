@@ -1,0 +1,19 @@
+@startuml
+
+
+actor iOT
+/''/
+actor iOTDeviceManagement
+/''/
+actor AmazonFreeRTOS
+/'microcontrollers 用 OS'/
+actor Greengrass
+/'iOT デバイスに、メッセージ送信、データキャッシング、
+機械学習などをセキュアに提供'/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml

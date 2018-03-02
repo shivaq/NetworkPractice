@@ -1,0 +1,291 @@
+▼ 反復刷り込み
+-------------------------------------------------
+Dr mc Gift px の内容を思い出せるか？
+メタデータ取得コマンドを打てるか？
+
+
+-------------------------------------------------
+
+▼ Apache で Web サーバを作成
+# -------------------------------------------------
+ →ssh でログイン
+
+yum update -y
+
+yum install httpd -y
+
+service httpd start
+
+デフォルトでサービスが起動するようにする
+chkconfig httpd on
+
+cd /var/www/html/
+
+vi index.html
+
+ブラウザから IP アドレス叩けば見えるはず
+# -------------------------------------------------
+
+
+▼ playbook より コマンドラインで活きる ansible コマンドたち
+# -------------------------------------------------
+ansible の 文章構造のお陰で、ノード別に結果が表示される
+# ansible node* -m shell -a "tail /var/log/syslog | grep Sockets"
+
+# nodeUbuntu01 | SUCCESS | rc=0 >>
+# Feb 23 06:42:42 nodeUbuntu01 systemd[13537]: Reached target Sockets.
+# Feb 23 06:42:43 nodeUbuntu01 ansible-command: Invoked with warn=True executable=None _uses_shell=True _raw_params=tail /var/log/syslog | grep Sockets removes=None creates=None chdir=None stdin=None
+#
+# nodeUbuntu02 | SUCCESS | rc=0 >>
+# Feb 23 06:42:42 nodeUbuntu02 systemd[24208]: Reached target Sockets.
+# Feb 23 06:42:43 nodeUbuntu02 ansible-command: Invoked with warn=True executable=None _uses_shell=True _raw_params=tail /var/log/syslog | grep Sockets removes=None creates=None chdir=None stdin=None
+
+
+ホストから web サーバへのアクセスを確認
+# curl nodeUbuntu01
+
+
+
+インストールされたことを確認
+# 対象ノードにログイン
+# dpkg -l | grep apache
+
+
+
+
+ssh-agent プロセスを起動させる
+# eval `ssh-agent -s`
+秘密鍵を ssh-agent に渡す
+# ssh-add ansibleWS.pem
+
+ping
+# ansible demo_hosts -m ping
+
+ファイルをコピー
+# コピー時は、 tmp ディレクトリを使うとゴミが増えなくて便利なのかな
+# ansible demo_hosts -m copy -a "src=/tmp/test1 dest=/tmp/test1"
+
+ファイルをアップロード
+# scp -i ansibleWS.pem soushinTaishou.txt ubuntu@ec2-13-231-60-165.ap-northeast-1.compute.amazonaws.com:~
+
+fact を収集
+# ansible ansible_controller -m setup
+
+Magic Variable を確認
+fact を収集しない場合
+# ansible-playbook magic_vars.yml -i staging
+fact を収集する場合
+# ansible-playbook -i hosts magic_vars.yml -e "check_env=True"
+
+
+playbook での出力を確認する
+# task:
+#   - name: someTask
+#     debug: var=someMagicVariableOrRegisteredOutputs
+
+
+
+他のロールを tasks/ 配下から実行する
+# - name: Reboot the host
+#   include_role:
+  common ロール内の
+#     name: common
+  task を参照するとして、この yml ファイルを実行
+#     tasks_from: reboot
+
+
+
+マスター playbook 内で、他の playbook を走らせる
+# roles の上の階層
+# ---
+# - import_playbook: webservers.yml
+# - import_playbook: databases.yml
+
+
+
+兄弟関係の task を走らせる
+# ---
+# file: main.yml
+# # tasks file for set_hostname
+# - import_tasks: hostname.yml
+# - import_tasks: hosts.yml
+
+handlers 内でも兄弟を参照
+# # more_handlers.yml
+# ---
+# - name: restart apache
+#   service: name=apache state=restarted
+
+# handlers:
+# - include_tasks: more_handlers.yml
+# # or
+# - import_tasks: more_handlers.yml
+
+SSH コネクションが切れても play を続ける
+# Asynchronous Actions and Polling
+  - name: simulate long running op (15 sec), wait for up to 45 sec, poll every 5 sec
+    command: /bin/sleep 15
+    # 45 秒待つ
+    async: 45
+    # 5秒間隔で task の完了を確認
+    poll: 5
+
+タスクを走らせた後、完了を確認しなくていい場合
+poll: 0
+# -------------------------------------------------
+
+
+Role のディレクトリ構造を生成
+# ansible-galaxy init (your_role_name)
+
+
+
+# -------------------------------------------------
+デバッグ
+      - name: copy web files
+        copy: src=index.html dest=/var/www/html/
+        # 出力を変数に格納
+        register: copy_status
+
+      - name: Print uptime
+        # playbook を走らせる際に、下記値を出力
+        debug: var=copy_status
+# -------------------------------------------------
+条件分岐
+when はモジュールであり、他のモジュール内のアイテム的インデントだとエラーになる
+      - name: Testing conditional
+        shell: uptime
+        when: ansible_hostname == "nodeUbuntu02"
+# -------------------------------------------------
+do while
+
+      # - name: Testing untill
+      #   shell: service apache2 status
+      #   register: result
+
+      # サービスのステータスが runnning ではない ( - 1 ) 間、
+      # リトライを ５回
+        until: result.stdout.find("active (running)") != -1
+        retries: 5
+        delay: 5
+# -------------------------------------------------
+
+
+
+
+
+
+
+ホスト名変更
+# -------------------------------------------------
+Debian 系
+# /etc/hostname
+# /etc/init.d/hostname.sh start
+
+Redhat 系
+# /etc/sysconfig/network
+# -------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+▼ ansible + AWS 反復練習パック
+-------------------------------------------------
+新たなホストを作成
+
+新Host に pem を送る
+# scp -i ansibleWS.pem soushinTaishou.txt ubuntu@ec2-13-231-60-165.ap-northeast-1.compute.amazonaws.com:~
+
+ターゲットのホスト名を記載
+# sudo vi /etc/hosts
+# 192.168.0.1 node01
+
+ubuntu python 入ってない問題に対応
+# playbook の理解が進んだら、下記を確認
+# https://gist.github.com/gwillem/4ba393dceb55e5ae276a87300f6b8e6f
+# playbook の理解が進まないうちは、ubuntu にログインして、それぞれ python のバージョン 2 をインストール
+# ssh ubuntu@nodeUbuntu01
+# sudo apt -y update
+# sudo apt install -y python-minimal
+
+ping を試す
+
+OriginHost から、ansible で 対象 Host に ansible をインストール
+
+ansible コマンドを --check できるようにする
+# sudo apt-get install python-apt
+
+/etc/ansible/hosts に登録
+# [demo_hosts]
+# nodeUbuntu01
+# nodeUbuntu02
+
+roles の一個上の階層に group_vars ディレクトリを作成し、グループごとの var を登録
+# ---
+# # file: ansible_controller.yml
+# ansible_user: ubuntu
+
+
+
+apache2 のインストールを試す
+# ---
+#   - hosts: web_portal
+#     tasks:
+#       - name: Installing apache2
+#         apt: name=apache2 state=installed update_cache=yes
+#         become: true
+#       - name: copy web files
+#         copy: src=/tmp/index.html dest=/var/www/html
+#         become: true
+
+
+インストールされたことを確認
+# 対象ノードにログイン
+# dpkg -l | grep apache
+
+ホストから web サーバへのアクセスを確認
+# curl nodeUbuntu01
+
+上記失敗したら、対象ノード内で確認
+# curl localhost
+
+Apache2 サービスのストップとかしてみる
+
+テンプレートを使って、html を作成
+
+プレイブックを verify してから、実行
+
+カールで確認
+# curl nodeUbuntu01/current.html
+
+ツリー構造確認
+# tree server/
+
+Role を書いていく
+
+
+書き終わったら。。。
+対象 web_hosts に ログインし、nginx が入っているかどうか確認
+# dpkg -l | grep nginx
+
+入っていたらアンインストール
+# sudo apt-get remove nginx
+
+apache2 もアンインストール
+# sudo apt-get remove apache2
+
+/var/www 配下のファイルを削除
+# rm -rf /var/www
+
+localhost へのカールの結果が返ってこない事を確認
+# curl localhost
+
+-------------------------------------------------

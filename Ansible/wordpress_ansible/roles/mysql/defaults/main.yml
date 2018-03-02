@@ -1,0 +1,5 @@
+---
+  # defaults フォルダは、この roles 配下の全ファイルから参照できる
+wp_mysql_db: wordpress
+wp_mysql_user: wordpress
+wp_mysql_password: passw0rd

@@ -1,0 +1,50 @@
+@startuml
+
+actor clientPC
+rectangle YourDatacenter {
+  usecase BackupApplication as bApp
+  note right: INITIATOR
+  clientPC <---> bApp
+
+  rectangle Storage{
+    usecase StorageAreaNetwork
+    usecase NetworkAttachedStorage
+    usecase DirectAttachedStorage
+
+    rectangle Host {
+      rectangle GatewayVM {
+
+        usecase TapeDrive
+        usecase MediaChanger
+        usecase UploadBUffer
+        usecase CacheStorage
+      }
+      bApp <---> TapeDrive:iSCSI
+      bApp <---> MediaChanger:iSCSI
+
+
+
+      CacheStorage <---> TapeDrive
+      CacheStorage <---> MediaChanger
+      CacheStorage <--> UploadBUffer
+    }
+
+    CacheStorage ---> StorageAreaNetwork
+    CacheStorage ---> NetworkAttachedStorage
+    CacheStorage ---> DirectAttachedStorage
+  }
+  }
+
+rectangle AWS{
+  usecase VirtualTapeBackedByS3 as vts3
+  vts3 <-----> UploadBUffer:アップロード
+
+  rectangle VirtualTapeShelf{
+    usecase VTBackedByGlacier as vtg
+    vts3 <.. vtg: Retrieving
+    vts3 ..> vtg: Archiving:ライフサイクルポリシー
+  }
+}
+
+
+@enduml

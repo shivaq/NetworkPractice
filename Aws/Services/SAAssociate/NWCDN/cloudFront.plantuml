@@ -1,0 +1,21 @@
+@startuml
+
+actor user
+actor admin
+
+rectangle CloudFront {
+  rectangle Distribution {
+    usecase Rules
+    rectangle CDN {
+      usecase EdgeLocation
+      usecase OriginS3
+
+      user -- EdgeLocation
+      EdgeLocation -- OriginS3
+    }
+    admin -- Rules:ルールを決める
+    Rules -- EdgeLocation
+  }
+
+}
+@enduml

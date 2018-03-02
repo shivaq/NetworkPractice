@@ -1,0 +1,52 @@
+Handler とは
+# Task上で状態が変更されていた時1回だけ実行されるジョブの仕組み
+# 対象 task 実行時に、[changed] が走った場合、
+# Handler に記載されている名前のジョブが実行される
+# task 実行後に notify で呼び出される
+
+Handler と Notify を使う利点
+# 柔軟性と再利用できること ⇒task からいつでもどこでも呼び出せる
+
+Notify とは
+# 同じ内容の Notify が複数回あった場合
+#  ⇒それでも Handler が実行されるのは 一回だけ
+
+Handler 専用 Role で Role を汎用化
+# Handler は Global に定義されている
+# inventory スコープをまたがって使うことができる
+# Handler だけ定義した Role を作成しておけば、参照できる。
+
+# 格納先 ⇒roles/restart_sample_application/handlers/main.yml
+# - name: sample_application_restart
+#   systemd:
+#     name: sample_application.service
+#     state: restarted
+#   become: yes
+
+Notify をリスト化
+   - name: some directive
+     template: ...
+     notify:
+       - Start apache
+       - Notify team
+# -------------------------------------------------
+tasks:
+- name: sample_application common config copy job
+  copy:
+    # src: foo/bar/common/
+    # dest: /foo/bar/common/
+  notify: sample_application_restart
+
+- name: sample_application variable copy job
+  copy:
+    # src: etc/default/sample_application.conf
+    # dest: /etc/default/sample_application.conf
+  notify: sample_application_restart
+
+handlers:
+  - name: sample_application_restart
+    # systemd:
+    #   name: sample_application.service
+    #   state: restarted
+    # become: yes
+-------------------------------------------------

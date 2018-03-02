@@ -1,0 +1,31 @@
+@startuml
+
+
+actor ElasticTranscoder
+/'アップした動画とかを、例えば Android デバイス向けとかに、
+いい感じにリサイズしたりしてくれる'/
+actor MediaConvert
+/'ファイルベースのビデオトランスコードサービス
+ブロードキャストな感じで配信できる'/
+actor MediaLive
+/'ライブビデオプロセッシングサービス
+ビデオストリームを生成'/
+actor MediaPackage
+/'ネット上のビデオをプロテクトするのに使う'/
+actor MediaStore
+/'メディアに最適化されたストレージサービス'/
+actor MediaTailor
+/'動画の画質とかを毀損することなく、ターゲット広告を打てたりする'/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml

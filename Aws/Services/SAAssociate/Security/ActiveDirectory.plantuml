@@ -1,0 +1,46 @@
+@startuml
+
+rectangle ユーザー{
+  actor user
+  actor admin
+  user <|-- admin
+  actor PC
+}
+
+PC -- user
+PC -- admin
+
+actor SecurityAccountManager as sam
+
+
+
+usecase DNS
+DNS -- PC
+
+rectangle フォレスト{
+  rectangle ADドメイン:アカウント管理単位{
+    actor ActiveDirectory as ad
+    actor DomainController as dc
+    ad <|-- dc:実装
+    actor ディレクトリデータベース as ddb
+
+    rectangle グループ {
+      usecase グループポリシー適用 as gpa
+      DNS -- dc:名前解決
+        dc -- gpa
+
+
+      ddb <-- gpa:登録
+      rectangle ドメインユーザー{
+        usecase ユーザー認証
+        dc -- ユーザー認証
+        ddb <-- ユーザー認証:登録
+      }
+    }
+  }
+}
+
+
+
+
+@enduml

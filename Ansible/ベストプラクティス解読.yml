@@ -1,0 +1,242 @@
+▼ ディレクトリ構造
+
+production                # inventory file for production servers
+staging                   # inventory file for staging environment
+
+group_vars/
+   group1                 # here we assign variables to particular groups
+   group2                 # ""
+host_vars/
+   hostname1              # if systems need specific variables, put them here
+   hostname2              # ""
+
+library/                  # if any custom modules, put them here (optional)
+module_utils/             # if any custom module_utils to support modules, put them here (optional)
+filter_plugins/           # if any custom filter plugins, put them here (optional)
+
+site.yml                  # master playbook
+webservers.yml            # playbook for webserver tier
+dbservers.yml             # playbook for dbserver tier
+
+roles/
+    common/               # this hierarchy represents a "role"
+        tasks/            #
+            main.yml      #  <-- tasks file can include smaller files if warranted
+        handlers/         #
+            main.yml      #  <-- handlers file
+        templates/        #  <-- files for use with the template resource
+            ntp.conf.j2   #  <------- templates end in .j2
+        files/            #
+            bar.txt       #  <-- files for use with the copy resource
+            foo.sh        #  <-- script files for use with the script resource
+        vars/             #
+            main.yml      #  <-- variables associated with this role
+        defaults/         #
+            main.yml      #  <-- default lower priority variables for this role
+        meta/             #
+            main.yml      #  <-- role dependencies
+        library/          # roles can also include custom modules
+        module_utils/     # roles can also include custom module_utils
+        lookup_plugins/   # or other types of plugins, like lookup in this case
+
+    webtier/              # same kind of structure as "common" was above, done for the webtier role
+    monitoring/           # ""
+    fooapp/               # ""
+    -------------------------------------------------
+
+
+▼ インベントリ
+-------------------------------------------------
+# file: production
+
+[atlanta-webservers]
+www-atl-1.example.com
+www-atl-2.example.com
+
+[boston-webservers]
+www-bos-1.example.com
+www-bos-2.example.com
+
+[atlanta-dbservers]
+db-atl-1.example.com
+db-atl-2.example.com
+
+[boston-dbservers]
+db-bos-1.example.com
+
+# webservers in all geos
+[webservers:children]
+atlanta-webservers
+boston-webservers
+
+# dbservers in all geos
+[dbservers:children]
+atlanta-dbservers
+boston-dbservers
+
+# everything in the atlanta geo
+[atlanta:children]
+atlanta-webservers
+atlanta-dbservers
+
+# everything in the boston geo
+[boston:children]
+boston-webservers
+boston-dbservers
+-------------------------------------------------
+
+
+  ▼ group_vars
+-------------------------------------------------
+地理別
+---
+# file: group_vars/atlanta
+ntp: ntp-atlanta.example.com
+backup: backup-atlanta.example.com
+サーバ種別
+---
+# file: group_vars/webservers
+apacheMaxRequestsPerChild: 3000
+apacheMaxClients: 900
+
+all 向け
+---
+# file: group_vars/all
+ntp: ntp-boston.example.com
+backup: backup-boston.example.com
+-------------------------------------------------
+
+
+
+▼ トップレベルの Playbook
+-------------------------------------------------
+走らせる際の使い分け方
+全体対象
+# ansible-playbook site.yml
+webservers グループ対象
+# ansible-playbook site.yml --limit webservers
+# ansible-playbook webservers.yml
+
+全種対象
+---
+# file: site.yml
+- import_playbook: webservers.yml
+- import_playbook: dbservers.yml
+
+同じくトップレベル。サーバ種別---
+# file: webservers.yml
+- hosts: webservers
+  roles:
+    - common
+    - webtier
+-------------------------------------------------
+
+▼ Handler の使われ方
+---
+# file: roles/common/tasks/main.yml
+
+- name: be sure ntp is installed
+  yum: name=ntp state=installed
+  tags: ntp
+
+- name: be sure ntp is configured
+  template: src=ntp.conf.j2 dest=/etc/ntp.conf
+  notify:
+    - restart ntpd
+  tags: ntp
+
+- name: be sure ntpd is running and enabled
+  service: name=ntpd state=started enabled=yes
+  tags: ntp
+
+# -------------------------------------------------
+---
+# file: roles/common/handlers/main.yml
+- name: restart ntpd
+  service: name=ntpd state=restarted
+# -------------------------------------------------
+
+▼ Playbook の走らせ方
+
+ansible-playbook -i production site.yml
+ansible-playbook -i production site.yml --tags ntp
+ansible-playbook -i production webservers.yml
+ansible-playbook -i production webservers.yml --limit boston
+ansible-playbook -i production webservers.yml --limit boston[1:10]
+ansible-playbook -i production webservers.yml --limit boston[11:20]
+ansible boston -i production -m ping
+ansible boston -i production -m command -a '/sbin/reboot'
+
+# confirm what task names would be run if I ran this command and said "just ntp tasks"
+ansible-playbook -i production webservers.yml --tags ntp --list-tasks
+
+# confirm what hostnames might be communicated with if I said "limit to boston"
+ansible-playbook -i production webservers.yml --limit boston --list-hosts
+# -------------------------------------------------
+
+
+▼ Playbook 内で、動的に OS ディストリビューション を判別し、処理を分岐
+
+---
+
+# talk to all hosts just so we can learn about them
+- hosts: all
+  tasks:
+    # ここで、os_CentOS みたいなローカル変数をホストグループとして取得している
+     - group_by: key=os_{{ ansible_distribution }}
+
+# 上記でグルーピングした os_CentOS を編集対象として下記 play を実行
+
+- hosts: os_CentOS
+  gather_facts: False
+  tasks:
+     - # tasks that only happen on CentOS go here
+# -------------------------------------------------
+group_by で取得した グループ用 group_vars もセットできる
+---
+# file: group_vars/all
+asdf: 10
+
+---
+# file: group_vars/os_CentOS
+asdf: 42
+# -------------------------------------------------
+
+include_vars
+対象 yml ファイルから、変数を取得する
+# -------------------------------------------------
+- hosts: all
+  tasks:
+    - include_vars: "os_{{ ansible_distribution }}.yml"
+    - debug: var=asdf
+# -------------------------------------------------
+- name: Include vars of stuff.yml into the 'stuff' variable (2.2).
+  include_vars:
+    file: stuff.yml
+    name: stuff
+# -------------------------------------------------
+
+
+▼ inventory に変数は格納しないのがベストプラクティス
+グループごと、ホストごとの変数は、 group_vars/host_vars 配下の yml ファイルに格納
+# /etc/ansible/host_vars/foosball
+
+
+# /etc/ansible/group_vars/webservers
+---
+ntp_server: acme.example.org
+database_server: storage.example.org
+# -------------------------------------------------
+
+
+▼ import* VS include*
+# -------------------------------------------------
+import*
+# import_playbook, import_tasks, etc
+静的
+Playbook parsing time に、import を前もって処理
+
+include*
+# include_tasks, include_role, etc
+動的
+実行時、そのタスクに到達した際に、include を処理

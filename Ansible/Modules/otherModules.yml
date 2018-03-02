@@ -1,0 +1,89 @@
+---
+# - hosts: demo_hosts
+#   vars:
+#     package1 : "nginx"
+#     package2 : "wget"
+#   tasks:
+    - name: Installing wget
+      apt: name={{ package2 }} state=installed update_cache=true
+      # sudo -i で、上記モジュールを実行する ⇒
+      # rootユーザーのデフォルトのシェルをログインシェルとして実行
+      #  ⇒パスワードを求められたりしない
+      # .bashrc や /etc/profile に定義された設定で実行する
+      # AMI ではデフォルトで sudo -i されるが、
+      # 他の環境の場合は、手動で sudo ファイルの設定が必要
+      become: true
+-------------------------------------------------
+
+
+
+
+
+
+
+
+setup モジュールのカスタマイズ
+# -------------------------------------------------
+innvenntory の全てのホストの fact を取得
+# ansible all-setup
+取得対象のホストをフィルタリング
+# ansible all -m setup -a "gather_subset=network, virtual"
+# -------------------------------------------------
+
+
+
+
+
+▼ File モジュール
+# -------------------------------------------------
+ファイルのオーナを変えたり
+シンボリックリンクを大量生産したり
+
+
+- file:
+    src: '/tmp/{{ item.src }}'
+    dest: '{{ item.dest }}'
+    state: link
+  with_items:
+    - { src: 'x', dest: 'y' }
+    - { src: 'z', dest: 'k' }
+# -------------------------------------------------
+
+
+
+
+# -------------------------------------------------
+シンボリックリンクについて
+# ・ショートカットのようなもの
+# パスの持ち方が違う
+
+C:\linksrc へのリンクを持っている場合
+ ショートカットのパス
+# C:\linksrc
+シンボリックリンクのパス
+# D:\Workspace\link\symlink
+
+バッチファイルを使う場合に重宝
+# バッチが Resource フォルダを参照している場合、
+# 。。。途中です 2018/02/23
+
+# -------------------------------------------------
+
+
+
+
+
+
+
+▼ User モジュール
+# -------------------------------------------------
+# Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the
+- user:
+    name: james
+    shell: /bin/bash
+    groups: admins,developers
+    append: yes
+# -------------------------------------------------
+ansible nodeUbuntu01 -m user -a "user=testUser"
+
+# -------------------------------------------------

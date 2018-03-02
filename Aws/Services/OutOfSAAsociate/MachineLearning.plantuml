@@ -1,0 +1,38 @@
+@startuml
+
+actor SageMaker
+/'ニューラルネットワークを使ったディープラーニングを簡単に使える'/
+actor Comprehend
+/'センチメント分析を行う。
+あなたの製品について、ユーザーがpositive/negative な事を言ってるかがわかる
+'/
+actor DeepLens
+/'AI 埋め込み物理 web カメラ
+何をみているかを認識する
+AWS バックエンドと連携してはいない。
+例）近づいてる人間が、あなたの知っている人間かどうか。
+ドアを開けるべきかどうか'/
+actor Lex
+/'アレクサ を使って、顧客と交信
+AI 機能で顧客とチャット'/
+actor MachineLearning
+/'SageMaker とは違う。あっちのが賢い。
+AWS クラウドにデータセットをアップして、
+分析する。で、何かしらの結果を予測する。
+商品のレコメンドとか。
+'/
+actor Polly
+/'テキストを音声に変換。アクセントも指定可能'/
+actor Rekognition
+/'画像や動画に移っているものを検知する。'/
+actor AmazonTranslate
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml

@@ -1,0 +1,9 @@
+---
+  hosts: web_portal
+  tasks:
+    - name: Check if is apache2 started
+      shell: systemctl status apache2
+      register: result
+      until: result.stdout.find("active(running)") != -1
+      retries: 5
+      delay: 5

@@ -1,0 +1,198 @@
+
+2018/02/25 16:40
+# -------------------------------------------------
+ubuntu@ansibleHostZ01:/tmp$ ansible-galaxy install ajsalminen.hosts
+- downloading role 'hosts', owned by ajsalminen
+- downloading role from https://github.com/ajsalminen/ansible-role-hosts/archive/master.tar.gz
+- extracting ajsalminen.hosts to /home/ubuntu/.ansible/roles/ajsalminen.hosts
+- ajsalminen.hosts (master) was installed successfully
+# -------------------------------------------------
+
+ajsalminen.hosts/
+├── defaults
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── README.md
+├── tasks
+│   ├── hostname.yml
+│   ├── hosts.yml
+│   └── main.yml
+├── templates
+│   ├── hostname.j2
+│   └── hosts.j2
+└── vars
+    └── FreeBSD.yml
+# -------------------------------------------------
+# ├── defaults
+# │   └── main.yml
+---
+# defaults file for hosts
+
+# /etc/hosts の、 127.0.0.1 localhost の部分になる
+hosts_ipv4_loopback_hosts:
+  address: 127.0.0.1
+  hostnames:
+    - localhost.localdomain
+    - localhost
+
+
+
+? アドレスとホスト名との対応は正しいことが保証される？
+# 172.31.37.64 nodeUbuntu01 になる
+hosts_default_ipv4_hosts:
+  # 対象サーバの fact から収集される値
+  # "ansible_default_ipv4": {
+  #           "address": "172.31.36.107",
+  #           "alias": "eth0",
+  #           "broadcast": "172.31.47.255",
+  #           "gateway": "172.31.32.1",
+  #           "interface": "eth0",
+  #           "macaddress": "06:db:e7:4c:91:c6",
+  #           "mtu": 9001,
+  #           "netmask": "255.255.240.0",
+  #           "network": "172.31.32.0",
+  #           "type": "ether"
+  #       },
+
+  address: "{{ ansible_default_ipv4.address }}"
+  hostnames:
+    # [demo_hosts]
+    # nodeUbuntu01 これが inventory_hostname にあたる
+    # 下記の場合は、server1.company.com が inventory_hostname
+    # web1 ansible_host=server1.company.com
+    - "{{ inventory_hostname }}"
+    - "{{inventory_hostname_short }}"
+
+# 上記二つの変数がまとめられている
+hosts_default_hosts:
+  - "{{ hosts_ipv4_loopback_hosts }}"
+  - "{{ hosts_default_ipv4_hosts }}"
+
+hosts_additional_hosts: []
+
+# ここでさらに変数がまとめられて下記のようになる
+# 127.0.0.1 localhost
+# 172.31.37.64 nodeUbuntu01
+# 172.31.47.123 nodeUbuntu02
+hosts_all_hosts: "{{ hosts_default_hosts|union(hosts_additional_hosts) }}"
+
+hosts_file_group: root
+# -------------------------------------------------
+
+
+
+
+# ├── tasks
+# │   ├── hostname.yml
+# │   ├── hosts.yml
+
+-------------------------------------------------
+# │   └── main.yml
+
+# tasks file for hosts
+
+TODO: include_vars についてもっとよく知る
+server_override_hosts
+hosts_override_hosts_template
+group_vars
+host_vars
+
+- name: Include OS-specific variables.
+# 変数を yml ファイルから動的にロード。
+  include_vars: "{{ ansible_os_family }}.yml"
+  when: ansible_os_family == 'FreeBSD'
+
+- include: hostname.yml
+- include: hosts.yml
+-------------------------------------------------
+
+-------------------------------------------------
+# │   ├── hostname.yml
+---
+
+- name: Set up /etc/hostname.
+  template:
+    src: "{{item}}"
+    dest: /etc/hostname
+    owner: root
+    # defaults/main.yml →root
+    group: "{{ hosts_file_group }}"
+    mode: 0644
+  with_first_found:
+    - files:
+      # inventory_hostname →/etc/ansible/hosts にある hostname
+      # hostname_
+        - "{{ 'hostname_' + inventory_hostname + '.j2' }}"
+        - hostname.j2
+      paths:
+        - ../templates
+-------------------------------------------------
+# │   ├── hosts.yml
+
+---
+
+- name: Set up /etc/hosts.
+  template:
+    src: "{{ item }}"
+    dest: /etc/hosts
+    owner: root
+    group:  "{{ hosts_file_group }}"
+    mode: 0644
+  with_first_found:
+    - files:
+        - "{{ 'hosts_' + inventory_hostname + '.j2' }}"
+        - hosts.j2
+      paths:
+        - ../templates
+  when: hosts_override_hosts_template is not defined
+
+- name: Set up /etc/hosts (override).
+  template:
+    src: "{{server_override_hosts}}"
+    dest: /etc/hosts
+    owner: root
+    group:  "{{ hosts_file_group }}"
+    mode: 0644
+  when: hosts_override_hosts_template is defined
+
+
+
+# ├── templates
+# │   ├── hostname.j2
+# │   └── hosts.j2
+-------------------------------------------------
+│   ├── hostname.j2
+
+{{ inventory_hostname_short }}
+-------------------------------------------------
+│   └── hosts.j2
+
+# {{ ansible_managed }}
+
+
+# /etc/hosts に記述される
+# 172.31.37.64 nodeUbuntu01 みたくなっていく
+
+# definition に hosts_all_hosts を格納
+{% for definition in hosts_all_hosts: %}
+# 下記一行が、 172.31.37.64の部分 nodeUbuntu01の部分 の一行になる
+{{ definition.address }}{% for hostname in definition.hostnames %} {{ hostname }}{% endfor %}
+
+{% endfor %}
+
+
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+-------------------------------------------------
+└── vars
+    └── FreeBSD.yml
+
+---
+hosts_file_group: wheel
+-------------------------------------------------

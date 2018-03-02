@@ -1,0 +1,18 @@
+@startuml
+
+actor Workspaces
+/'VDI VirtualDesktopInfrastructure
+クラウド上で OS を走らせる'/
+actor AppStream2.0
+/'クラウド上で走るアプリを、デバイス上で使う Citrix 的なやつ'/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+actor test
+/''/
+@enduml
