@@ -1,0 +1,62 @@
+@startuml
+left to right direction
+usecase Internet_Gateway
+note top: インターネット
+usecase VirtualPrivateGateway
+note bottom: VPN
+
+actor admin
+usecase S3
+usecase EC2RoleForS3
+
+rectangle Region_asia{
+  rectangle VPC_shibata_10.0.0.0/16{
+
+    usecase Router
+    Router <-- Internet_Gateway
+    Router <-- VirtualPrivateGateway
+
+    usecase Public_RouteTable
+    usecase NetworkACL1
+    Public_RouteTable <-- Router
+    NetworkACL1 <-- Public_RouteTable
+
+    usecase Private_RouteTable
+    usecase NetworkACL2
+    Private_RouteTable <-- Router
+    NetworkACL2 <-- Private_RouteTable
+
+    rectangle public_SN_10.0.1.0/24{
+      'SN = Subnet'
+      usecase HTTP_enabled_SecurityGroup
+      note top: インターネットからのアクセス
+      usecase Bastion
+      note left: オートスケール
+      usecase Instance1
+      HTTP_enabled_SecurityGroup <-- NetworkACL1
+      Bastion <-- NetworkACL1
+      Bastion <-- admin:SSH
+      usecase NATGateway
+      note top: 自動フェイルオーバー
+            NATGateway --> HTTP_enabled_SecurityGroup
+    }
+
+    rectangle private_SN_10.0.2.0/24{
+      usecase Default_SecurityGroup
+      note top: VPN や SSH などからのアセスのみ
+      usecase Instance2
+      Bastion --> Instance2
+      Instance2 --> NATGateway
+
+      Default_SecurityGroup <-- NetworkACL2
+      usecase S3Endpoint
+
+      Instance2 --> S3Endpoint
+      S3Endpoint --> EC2RoleForS3
+      EC2RoleForS3 --> S3
+    }
+  }
+}
+
+
+@enduml

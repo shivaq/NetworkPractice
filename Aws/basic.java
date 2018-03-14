@@ -1,7 +1,7 @@
 DevelpperAssociate は SoftwareArchitectAssociate を取得できていれば、
 1,2時間の追加勉強で取得できる
 
-▼ CommandLineTool を有効化する方法
+▼ CommandLineTool を有効化する方法// Amazon CLI
 -------------------------------------------------
 準備
 AccessKeyId と SecretAccessKey を用意
@@ -17,6 +17,8 @@ Default output format は 空のまま Enter でいい。
 
 下記で表示されれば成功
 // aws s3 ls
+
+
 -------------------------------------------------
 
 
@@ -62,13 +64,13 @@ SSH アクセス方法
 EC2 作成時にダウンロードした Pem ファイルを、任意の場所に格納する
 Git 等でそのディレクトリに移動
 全アクセス権を読み込みのみに変更
-// chmod 400 shivaq.pem
+// chmod 400 qqqqq.pem
 
 SSH で VM にアクセス
 ユーザー名： ec2-user// Amazon linux の場合
 対象IPアドレス：EC2 の IPv4 パブリック IP
 公開鍵が認証時に ID を読み込むファイルを -i で指定
-// ssh ec2-user@54.199.247.174 -i shivaq.pem
+// ssh ec2-user@54.199.247.174 -i qqqqq.pem
 -------------------------------------------------
 
 

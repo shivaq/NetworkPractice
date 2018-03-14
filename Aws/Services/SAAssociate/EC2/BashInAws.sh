@@ -37,7 +37,7 @@ yum update -y
 yum install httpd -y
 service httpd start
 chkconfig httpd on
-aws s3 cp s3://shivaq-test /var/www/html/ --recursive
+aws s3 cp s3://qqqqq-test /var/www/html/ --recursive
 -------------------------------------------------
 
 

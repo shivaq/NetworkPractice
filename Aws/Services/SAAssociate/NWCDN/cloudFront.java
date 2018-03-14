@@ -62,7 +62,7 @@ CloudFront に S3 の Origin へのread permission を
 ドメインネームを割り当てる
 -------------------------------------------------
 CloudFront を適用した結果、s3-eu-west-1 から、アドレスが変わる
-https://s3-eu-west-1.amazonaws.com/shivaqireland/blond_woman_bob_jersey1.png
+https://s3-eu-west-1.amazonaws.com/qqqqqireland/blond_woman_bob_jersey1.png
 https://d3bdx9c5575ij9.cloudfront.net/blond_woman_bob_jersey1.png
 -------------------------------------------------
 Edit

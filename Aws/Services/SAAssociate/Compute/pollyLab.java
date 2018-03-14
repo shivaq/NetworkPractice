@@ -54,7 +54,7 @@ website 用バケツを開く
 bucketpolicypermissions.json
 下記みたく上書き ⇒ 保存 パブリックになるが、webページなのでOK
 "Resource": [
-  "arn:aws:s3:::shivaq-polly-website/*"
+  "arn:aws:s3:::qqqqq-polly-website/*"
 ]
 
 script

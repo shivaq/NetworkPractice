@@ -1,0 +1,33 @@
+@startuml
+
+usecase internet
+
+rectangle VPC {
+  usecase webserver
+  usecase backend
+  usecase SecurityGroup
+  usecase ACL
+
+  rectangle EC2{
+    usecase DB
+    usecase AppServer
+  }
+  backend -- SecurityGroup
+  backend -- ACL
+  SecurityGroup <|-- DB
+  SecurityGroup <|-- AppServer
+  ACL <|-- DB
+  ACL <|-- AppServer
+  webserver -- backend:private
+
+  webserver -- internet:public
+
+}
+
+rectangle Corporate_DC{
+  usecase DC
+}
+usecase VPN
+DC -- VPN
+VPN -- webserver:これも可能
+@enduml
