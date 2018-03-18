@@ -1,0 +1,18 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  BucketNameParam:
+    Description: Name of S3Bucket
+    Type: String
+    Default: mys3bucketacloudgurutraining
+Resources:
+  S3BucketResourceLogicalId:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Ref: BucketNameParam
+Outputs:
+  S3BucketNameOutput:
+    Value:
+      Ref: S3BucketResourceLogicalId
+    Description: Name of S3 bucket

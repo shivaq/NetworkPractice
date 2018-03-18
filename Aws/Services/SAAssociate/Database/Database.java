@@ -32,3 +32,20 @@ SCT // Schema Conversion Tool
 
 Oracle など、ライセンス料の高い DB から MySQL や Aurora といった無料の DB に変換できる。
 -------------------------------------------------
+
+
+
+
+▼ OLTP vs OLAP
+-------------------------------------------------
+Online "Transaction" Processing
+Online "Analytics" Processing
+
+OLTP 例
+SELECT * FROM db WHERE _id=233232323;
+データの row から 顧客名や配送状況 などを引き出す
+
+OLAP 例
+村田製作所 と Sony の センサーの総利益を、アジア地域と北米地域とで抽出
+各地域の売上数、単価、ユニットコストなどを引き出して、処理して出す
+-------------------------------------------------

@@ -3,8 +3,8 @@
 ・Primary RDS から Secondary RDS にレプリケートする際、
 その際の送信に課金はされない
 
-・Oracle と MySQL の RDS のボリュームサイズは、デフォルトで最大 6TB
-・RDS インスタンスの IOPS のMax は、デフォルトで 30000 IOPS
+・デフォルトボリューム Max 6 TB// Oracle と MySQL の RDS
+・デフォルト IOPS Max →30000 IOPS// RDS インスタンス
 
 SQL Server, Oracle, MySQL Server, PostgreSQL , Aurola, MariaDB,
 -------------------------------------------------
@@ -13,9 +13,14 @@ SQL Server, Oracle, MySQL Server, PostgreSQL , Aurola, MariaDB,
 
 
 
-AutomatedBackups vs DatabaseSnapshot
+▼ AutomatedBackups
 -------------------------------------------------
-AutomatedBackups
+・バックアップ中は I/O は保留され、レイテンシーがぐっと上がる。
+// 数秒
+// 定義済み Window で行われる。
+
+・オリジナルの RDS インスタンスを削除すれば AutomatedBackups も消える
+
 DB を retention period 内で、秒単位で指定して復元できる。
 
 retention period
@@ -29,19 +34,18 @@ retention period
 AutomatedBackups はデフォルトで有効化。
 S3 に保存されており、S3 での保存分は無料。何GBだろうが。
 
-バックアップは定義済み Window で行われ、
-バックアップ中は I/O は保留され、レイテンシーがぐっと上がる。
 
-オリジナルの RDS インスタンスを削除すれば AutomatedBackups も消える
 -------------------------------------------------
 
 
 
 DatabaseSnapshot
 -------------------------------------------------
-手動で行われる。オリジナルの RDS インスタンスを削除しても保持されたまま。
+・DB スナップショットを取得する際、 I/O はサスペンドされる
+// 数秒
 
-DB スナップショットを取得する際、 I/O はサスペンドされる
+・オリジナルの RDS インスタンスを削除しても保持されたまま。
+手動で行われる。
 -------------------------------------------------
 
 
