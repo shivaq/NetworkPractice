@@ -53,6 +53,7 @@ Resources:
         - VPCRanges
         - Ref: CIDRRange
         - PublicSubnetAZ1
+        # サブネット作成時に、パブリックIP を付与
       MapPublicIpOnLaunch: 'True'
       Tags:
       - Key: Name
@@ -146,6 +147,7 @@ Resources:
           - ''
           - - Ref: AWS::StackName
             - "-IGW"
+# VPC に IGW をアタッチ
   VGAIGWBase:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -153,6 +155,7 @@ Resources:
         Ref: IGWBase
       VpcId:
         Ref: VPCBase
+########################### Route Table ####################
   RouteTablePublic:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -165,6 +168,7 @@ Resources:
           - ''
           - - Ref: AWS::StackName
             - "-PublicRT"
+# private サブネットごとに、異なる NATGateway を使うため、それぞれにRT を作成
   RouteTablePrivateAZ1:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -189,9 +193,12 @@ Resources:
           - ''
           - - Ref: AWS::StackName
             - "-PrivateAZ2RT"
+########################### Route ####################
   RoutePublicDefault:
+    # PublicRoute 作成前に、要VPCIGWアタッチ
     DependsOn:
     - VGAIGWBase
+    # テーブルじゃなくて、Route
     Type: AWS::EC2::Route
     Properties:
       RouteTableId:
@@ -199,6 +206,7 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId:
         Ref: IGWBase
+########################### Route Association ####################
   RouteAssociationPublicAZ1Default:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
