@@ -18,6 +18,19 @@ Default output format は 空のまま Enter でいい。
 下記で表示されれば成功
 // aws s3 ls
 
+各プロファイルの情報は下記にある
+// $HOME/.aws/config, credentials
+
+プロファイル名を切り替えて登録
+// aws configure --profile new_profile_name
+
+プロファイル名を指定して aws コマンド実行
+// aws s3 ls --profile backupuser
+
+
+
+
+
 
 -------------------------------------------------
 

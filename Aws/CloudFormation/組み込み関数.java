@@ -1,5 +1,3 @@
-
-
 ▼ Ref
 -------------------------------------------------
 パラメーターの論理名を指定 →パラメータの値を返す
@@ -10,6 +8,11 @@ AWS::EC2::Instance →インスタンス ID を返す
 ドキュメントの 参照番号 に、
 戻り値としての Ref がある
 -------------------------------------------------
+
+
+
+
+
 
 
 ▼ !GetAtt
@@ -61,7 +64,7 @@ AWS::EC2::Instance →インスタンス ID を返す
 
 
 // Parameters:
-//   DbSubnetIpBlocks: 
+//   DbSubnetIpBlocks:
 //     Description: "Comma-delimited list of three CIDR blocks"
 //     Type: CommaDelimitedList
 //     Default: "10.0.48.0/24, 10.0.112.0/24, 10.0.176.0/24"

@@ -1,4 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
+
+# 制約は、他の制約や値、マップを参照できる
+#
+# よく使われるConditions
+# 環境 dev, test, prod
+# リージョン
+# パラメータ
+
 Mappings:
   RegionMap:
     us-east-1:

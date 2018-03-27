@@ -23,6 +23,20 @@ Mappings:
     production:
       instanceType: t2.micro
 
+# enumみたく使える
+# dev vs prod, Region, AZ, AWS アカウント, AMI タイプ
+#
+# Map した値の参照
+# !FindInMap [マップ名、トップレベルKey, セカンドレベルKey]
+# InstanceType: !FindInMap [EnvironmentToInstanceType, !Ref 'EnvironmentName', instanceType]
+
+
+# ▼ Parameter vs Mappings
+# -------------------------------------------------
+# Parameter →更新することで可変可能な値
+# Mappings →事前に決まっている値。不可変
+# -------------------------------------------------
+
   AWSRegionArch2AMI:
     us-east-1:
       HVM64: ami-c2680fa4

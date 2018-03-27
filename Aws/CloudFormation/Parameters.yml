@@ -1,5 +1,13 @@
 # Parameters セクション コンソールの"詳細の指定" で選択
 #  →Resources value の !Ref で参照してる
+
+# 要入力項目、デフォルト値、リスト、制約をセットできる
+# コンソール上でスタックを作成または更新する際、
+# デフォルト値や、デフォルトリスト、制約を設定できる。
+#
+# どんな場合に使うか？
+# 規定の範囲で何度も作成する場合。
+  
 Parameters:
   SecurityGroupDescription:
     Description: Security Group Description (Simple parameter)
