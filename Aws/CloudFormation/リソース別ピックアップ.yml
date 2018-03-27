@@ -1,0 +1,158 @@
+Resources:
+  VPCBase:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+         # →CIDRRange を参照して、deleimiter は '' で、 /16 と Join する
+        Fn::Join:
+        - ''
+        - - Ref: CIDRRange
+          - "/16"
+      EnableDnsSupport: 'True'
+      EnableDnsHostnames: 'True'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-VPC"
+# -------------------------------------------------
+  PublicNetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        # CloudFormation を作った AWS リージョン を参照して、 AZs 配列を返し、[0] を選択
+        Fn::Select:
+        - '0'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+          # VPCRanges マッピングの、CIDRRange で選択された CIDR の、PublicSubnetAZ1 キーの Value
+        - VPCRanges
+        - Ref: CIDRRange
+        - PublicSubnetAZ1
+      MapPublicIpOnLaunch: 'True'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PublicAZ1"
+      VpcId:
+        Ref: VPCBase
+# -------------------------------------------------
+  IGWBase:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-IGW"
+# -------------------------------------------------
+  VGAIGWBase:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId:
+        Ref: IGWBase
+      VpcId:
+        Ref: VPCBase
+# -------------------------------------------------
+  RouteTablePublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCBase
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PublicRT"
+# -------------------------------------------------
+  RouteTablePrivateAZ1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCBase
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PrivateAZ1RT"
+# -------------------------------------------------
+  RoutePublicDefault:
+    DependsOn:
+    - VGAIGWBase
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: RouteTablePublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: IGWBase
+# -------------------------------------------------
+  RouteAssociationPublicAZ1Default:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicNetAZ1
+      RouteTableId:
+        Ref: RouteTablePublic
+# -------------------------------------------------
+  RouteAssociationPublicAZ2Default:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicNetAZ2
+      RouteTableId:
+        Ref: RouteTablePublic
+# -------------------------------------------------
+  RouteAssociationPrivateAZ1Default:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateNetAZ1
+      RouteTableId:
+        Ref: RouteTablePrivateAZ1
+# -------------------------------------------------
+  NATAZ1:
+    Type: AWS::EC2::NatGateway
+    DependsOn: VGAIGWBase
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+        - EIPNATAZ1
+        - AllocationId
+      SubnetId:
+        Ref: PublicNetAZ1
+# -------------------------------------------------
+  EIPNATAZ1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+# -------------------------------------------------
+  NATAZ1Route:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: RouteTablePrivateAZ1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NATAZ1
+# -------------------------------------------------
+Outputs:
+  PublicIP:
+    Description: EC2 public IP
+    Value: !GetAtt WebServer.PublicIp
+  WebsiteURL:
+    Description: WordPress Website
+    Value: !Sub "http://${WebServer.PublicDnsName}/wordpress"

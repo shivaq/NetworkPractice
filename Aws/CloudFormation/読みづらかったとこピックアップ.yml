@@ -1,0 +1,43 @@
+CidrBlock:
+   # →CIDRRange を参照して、deleimiter は '' で、 /16 と Join する
+  Fn::Join:
+  - ''
+  - - Ref: CIDRRange
+    - "/16"
+
+# -------------------------------------------------
+  PublicNetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        # CloudFormation を作った AWS リージョン を参照して、 AZs 配列を返し、[0] を選択
+        Fn::Select:
+        - '0'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+          # VPCRanges マッピングの、CIDRRange で選択された CIDR の、PublicSubnetAZ1 キーの Value
+        - VPCRanges
+        - Ref: CIDRRange
+        - PublicSubnetAZ1
+# -------------------------------------------------
+Outputs:
+  StackSSHSecurityGroup:
+    Description: The SSH Security Group for our Company
+    Value: !Ref MyCompanyWideSSHSecurityGroup
+    # Export する値に変数名を割り当て
+    Export:
+      Name: SSHSecurityGroup
+# -------------------------------------------------
+Resources:
+  MySecureInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-a4c7edb2
+      InstanceType: t2.micro
+      SecurityGroups:
+        # we reference the output here, using the Fn::ImportValue function
+        - !ImportValue SSHSecurityGroup
+# -------------------------------------------------

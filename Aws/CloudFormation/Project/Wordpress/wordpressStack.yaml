@@ -24,6 +24,7 @@ Resources:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock:
+         # →CIDRRange を参照して、deleimiter は '' で、 /16 と Join する
         Fn::Join:
         - ''
         - - Ref: CIDRRange
@@ -41,12 +42,14 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone:
+        # CloudFormation を作った AWS リージョン を参照して、 AZs 配列を返し、[0] を選択
         Fn::Select:
         - '0'
         - Fn::GetAZs:
             Ref: AWS::Region
       CidrBlock:
         Fn::FindInMap:
+          # VPCRanges マッピングの、CIDRRange で選択された CIDR の、PublicSubnetAZ1 キーの Value
         - VPCRanges
         - Ref: CIDRRange
         - PublicSubnetAZ1
