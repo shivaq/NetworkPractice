@@ -51,6 +51,55 @@
  二つの iterable をまとめて出力 for ループ
  # for (f, v) in zip(colors, vegetable):print(f, v)
  # どちらかの要素がなくなったらループが止まる
+
+ range
+ # powers = []
+ # for i in range(1, 21):
+ #     powers.append(2 ** i)
+ 上記を "List conprehension" する
+ # powers = [ 2 ** i for i in range(1, 21) ]
+ # for ループをしたら、(左辺？側にある処理を) i に対して実行
+
+ネストループ
+# colors = [ "Red", "Yellow", "Blue", "Pink"]
+# modifiers = ["Dark", "Light", "Brownish"]
+# for c in colors:
+#     for m in modifiers:
+#         print(m + " " + c)
+
+while ループ
+# In [86]: countdown = 10
+# In [85]: while countdown >= 0:
+#     ...:     print(str(countdown))
+#     ...:     countdown -=1
+
+Dictionary に Key/Value 追加
+# cats = {}
+# cats["Robin"] = 5
+# cats["David"] = 4
+# cats
+# {'David': 4, 'Robin': 5}
+
+Dictionary 初期要素定義
+# cats = {"Robin":5, "Paul":3, "John":9}
+
+値取得
+# cats.get("David")
+Map 内 値有無確認
+# "David" in cats
+Key 出力
+# for name in cats:print(name)
+Value 出力
+# for num in cats.values():print(num)
+Key と value を組み合わせた文章を出力
+# for name in cats:print("{0} has {1} cat(s)".format(name, cats[name]))
+Key:Value なフォーマットで出力
+# for (person, num) in cats.items():print(person + ":" + str(num))
+Key をもとに要素を削除
+# del cats["David"]
+Key をもとに要素を Pop
+# cats.pop("Robin")
+# cats.pop("NoExistence","defaultStr")
 -------------------------------------------------
 
 
@@ -395,6 +444,7 @@ continue: 現在の ループラウンドの、以降の処理をスキップ
     ...: else:
 #     ...:     print("Couldn't find it...")
 
+range
 # powers = []
 # for i in range(1, 21):
 #     powers.append(2 ** i)
@@ -403,13 +453,11 @@ continue: 現在の ループラウンドの、以降の処理をスキップ
 # for ループをしたら、(左辺？側にある処理を) i に対して実行
 
 ネストループ
-# In [80]: modifiers = ["Dark", "Light", "Brownish"]
-# In [81]: for c in colors:
-#     ...:     for m in modifiers:
-#     ...:         print(m + " " + c)
-ネスト その2
-# In [82]: for a in "aiueo":
-#     ...:     print("my favorite vowel is " + a)
+# colors = [ "Red", "Yellow", "Blue", "Pink"]
+# modifiers = ["Dark", "Light", "Brownish"]
+# for c in colors:
+#     for m in modifiers:
+#         print(m + " " + c)
 
 while ループ
 # In [86]: countdown = 10
@@ -437,11 +485,13 @@ while ループ
 -------------------------------------------------
 Dictionary に Key/Value 追加
 # cats = {}
-# 辞書は {} で リストは []
 # cats["Robin"] = 5
 # cats["David"] = 4
 # cats
 # {'David': 4, 'Robin': 5}
+
+Dictionary 初期要素定義
+# cats = {"Robin":5, "Paul":3, "John":9}
 
 値取得
 # cats.get("David")
