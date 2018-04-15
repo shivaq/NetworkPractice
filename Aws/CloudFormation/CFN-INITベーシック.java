@@ -37,16 +37,46 @@ AWS::CloudFormation::Init キーからテンプレートメタデータを読み
 
 // cfn-init を使用して既存のファイルを更新すると、.bak ファイルが生成される
 
+
+Configset
+// 複数の設定キーを作成し、特定の順序で cfn-init によって処理されるようにする
+-------------------------------------------------
+configSets:
+  ascending:
+    - "config1"
+    - "config2"
+  descending:
+    - "config2"
+    - "config1"
+config1:
+  commands:
+    test:
+      command: "echo \"$CFNTEST\" > test.txt"
+      env:
+        CFNTEST: "I come from config1."
+      cwd: "~"
+config2:
+  commands:
+    test:
+      command: "echo \"$CFNTEST\" > test.txt"
+      env:
+        CFNTEST: "I come from config2"
+      cwd: "~"
+-------------------------------------------------
+
 Packages
 ・プロセス順 rpm, yum/apt, rubygems, python
 
 groups:
+// Linux/UNIX グループを作成して、グループ ID を割り当てる
 // ID は何でもいい場合{}
  // group1: {}
  // group2:
  //  gid: "45"
 
 users:
+// Linux/UNIX ユーザーを EC2 インスタンス上に作成
+
  // myUser:
  //  groups:
  //   - "group1"
@@ -54,15 +84,92 @@ users:
  //  uid: "50"
  //  homeDir: "/tmp"
 
-zip や tar を ダウンロードして解凍
-・common スクリプトを S3 とかに格納しておいて、解凍 →実行すると便利
-・Github プロジェクトを DL するとか
+
 
   sources:
+  // zip や tar を ダウンロードして解凍
+  // ・ブートストラップ用の スクリプトを S3 とかに格納しておいて、解凍 →実行すると便利
+  // ・Github プロジェクトを DL するとか
   // /etc/myapp: "https://s3.amazonaws.com/mybucket/myapp.tar.gz"
     // "/home/ec2-user/aws-cli": "https://github.com/aws/aws-cli/tarball/master"
 
+services
+// インスタンスが起動されるときに有効化または無効化する必要のあるサービスを定義
+// ソース、パッケージ、ファイルへの依存関係も指定でき、インストールされているファイルのために再起動が必要になった場合に、cfn-init がサービスの再起動を処理
 -------------------------------------------------
+services:
+  sysvinit:
+    nginx:
+      enabled: "true"
+      ensureRunning: "true"
+      files:
+        - "/etc/nginx/nginx.conf"
+      sources:
+        - "/var/www/html"
+    php-fastcgi:
+      enabled: "true"
+      ensureRunning: "true"
+      packages:
+        yum:
+          - "php"
+          - "spawn-fcgi"
+    sendmail:
+      enabled: "false"
+      ensureRunning: "false"
+
+  windows:
+    cfn-hup:
+      enabled: "true"
+      ensureRunning: "true"
+      files:
+        - "c:\\cfn\\cfn-hup.conf"
+        - "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+-------------------------------------------------
+
+commands
+
+  // - test →command キーに指定されているコマンドが cfn-init で実行されるかどうかを決定するテストコマンドです。テストが成功すると、cloud-init はコマンドを実行
+  // - ignoreErrors →コマンドが失敗した 場合に cfn-init を実行し続けるかどうかを指定するブール値
+  // - waitAfterCompletion →Windows システムの場合のみ。コマンドによって再起動が行われる場合に、コマンド終了後にどのぐらい待機するかを指定
+
+  // ※※ コマンドとコマンドとの間に、60 秒の待ち時間がデフォルトで設定されている
+  //      Windows で、コマンドが多い場合はめちゃくちゃ時間かかるので要調整
+-------------------------------------------------
+    commands:
+      test:
+        command: "echo \"$MAGIC\" > test.txt"
+        env://  env →コマンドの環境変数を設定。既存の環境に追加するのではなく、既存の環境を上書き
+          MAGIC: "I come from the environment!"
+        cwd: "~" // - cwd →作業ディレクトリ
+        test: "test ! -e ~/test.txt"// テストが成功すると、cloud-init はコマンドを実行
+        ignoreErrors: "false"
+      test2:
+        command: "echo \"$MAGIC2\" > test2.txt"
+        env:
+          MAGIC2: "I come from the environment!"
+        cwd: "~"
+        test: "test ! -e ~/test2.txt"
+        ignoreErrors: "false"
+-------------------------------------------------
+
+files
+// EC2 インスタンス上にファイルを作成できます。内容は、テンプレートにおいてインラインで指定することも、URL から取得することもできます。
+-------------------------------------------------
+files:
+  /tmp/setup.mysql:
+    content: !Sub |
+      CREATE DATABASE ${DBName};
+      CREATE USER '${DBUsername}'@'localhost' IDENTIFIED BY '${DBPassword}';
+      GRANT ALL ON ${DBName}.* TO '${DBUsername}'@'localhost';
+      FLUSH PRIVILEGES;
+    mode: "000644"
+    owner: "root"
+    group: "root"
+-------------------------------------------------
+
+
+
+
 
 
 ▼ cfn-signal

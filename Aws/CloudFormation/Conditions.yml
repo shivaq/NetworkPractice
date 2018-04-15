@@ -48,7 +48,7 @@ Parameters:
 Conditions:
   # Condition 名
   # And, Equals, If, Not, Or が使える
-  CreateProdResources: !Equals [ !Ref EnvType, prod ]
+  IsProductionEnv: !Equals [ !Ref EnvType, prod ]
 
 Resources:
   EC2Instance:
@@ -61,7 +61,7 @@ Resources:
   MountPoint:
     Type: "AWS::EC2::VolumeAttachment"
     # Condition を参照
-    Condition: CreateProdResources
+    Condition: IsProductionEnv
     Properties:
       InstanceId:
         !Ref EC2Instance
@@ -71,7 +71,7 @@ Resources:
 
   NewVolume:
     Type: "AWS::EC2::Volume"
-    Condition: CreateProdResources
+    Condition: IsProductionEnv
     Properties:
       Size: 8
       AvailabilityZone:
@@ -80,6 +80,6 @@ Resources:
 
 Outputs:
   VolumeId:
-    Condition: CreateProdResources
+    Condition: IsProductionEnv
     Value:
       !Ref NewVolume
