@@ -100,8 +100,8 @@ services
 services:
   sysvinit:
     nginx:
-      enabled: "true"
-      ensureRunning: "true"
+      enabled: "true"  // 起動時にサービスON
+      ensureRunning: "true"// このプロセスが終わった後で走っている状態を保証
       files:
         - "/etc/nginx/nginx.conf"
       sources:
