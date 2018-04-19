@@ -1,4 +1,4 @@
-5:40 から
+3:00 から
 
 Parameters:
   # 再利用案1：一番簡単で、一番エレガントじゃない方法
@@ -30,6 +30,9 @@ Parameters:
     Type: String
     Default: w0rdpr4497
     NoEcho: true
+  TestString:
+    Type: String
+    Default: test9
 
   # 再利用案2：そこそこエレガントな方法
 Mappings:
@@ -138,9 +141,12 @@ Resources:
             - "configure_cfn"
             - "install_wordpress"
             - "config_wordpress"
+        # CFN をセットするためのブロック
         configure_cfn:
           files:
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              # triggers=post.update →スタックがアップデートされたら、
+              # action= →このアクションを実行 →cfn-init の このスタックこのリソースこのconfigsets...
               content: !Sub |
                 [cfn-auto-reloader-hook]
                 triggers=post.update
@@ -149,8 +155,11 @@ Resources:
               mode: "000400"
               owner: root
               group: root
-            # HUP （Hang Up）ターミナルが終了したらプロセスに送られるシグナル。
+            # cfn-hup →リソースメタデータの変更を検出し、指定された操作を実行するデーモン
             /etc/cfn/cfn-hup.conf:
+              # hooks.d フォルダ内の content に基いて、
+              # スタック情報を、5分毎にポーリング。変化があったら
+              # [cfn-auto-reloader-hook] の triggers=post.update に従い、action が実行される
               content: !Sub |
                 [main]
                 stack=${AWS::StackId}
@@ -168,6 +177,7 @@ Resources:
               cfn-hup:
                 enabled: "true"
                 ensureRunning: "true"
+                # 下記ファイルに変更がなされると、cfn-hup が再起動する
                 files:
                   - "/etc/cfn/cfn-hup.conf"
                   - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
@@ -179,6 +189,7 @@ Resources:
               mysql: []
               php-mysql: []
           sources:
+            # ダウンロードして、展開もする
             /var/www/html: "http://wordpress.org/latest.tar.gz"
           services:
             sysvinit:
@@ -186,16 +197,20 @@ Resources:
                 enabled: "true"
                 ensureRunning: "true"
         config_wordpress:
+          # 下記は files セクションでもできる。commands でやる理由は、
+          # 各ステップに区切りをつけて記述することで、
+          # 設定方法が代わった時に、変化に適用しやすくするため。
           commands:
             01_clone_config:
               cwd: "/var/www/html/wordpress"
+              # ファイルの存在をテスト
               test: "test ! -e /var/www/html/wordpress/wp-config.php"
               command: "cp wp-config-sample.php wp-config.php"
             02_inject_dbhost:
               cwd: "/var/www/html/wordpress"
               command: !Sub |
-#           database_name_here を DatabaseName と置換する
-# sed -i 's/database_name_here/${DatabaseName}/g'
+              #           database_name_here を DatabaseName と置換する
+              # sed -i 's/database_name_here/${DatabaseName}/g'
                 sed -i 's/localhost/${DB.Endpoint.Address}/g' wp-config.php
             03_inject_dbname:
               cwd: "/var/www/html/wordpress"
@@ -237,3 +252,12 @@ Resources:
 #   - S3 などのエンドポイントに対する認証も使える
 #   - S3 や HTTP、HTTPS、GitHub から ファイルやフォルダを作成できる
 #   - 冪等性を保証
+
+
+# ▼ /var/log/cloud-init.log
+# UserData ブロックの実行結果を出力
+# ▼ /var/log/cfn-init-log
+# /var/log/cfn-init-log を見ると、commands の各ステップの完了状況が出力されている
+# CloudFormation::Init プロセスの出力
+▼ cfn-hup.log
+Cfn-Hup プロセスの出力
