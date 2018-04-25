@@ -1,4 +1,4 @@
-3:00 から
+5:10 から
 
 Parameters:
   # 再利用案1：一番簡単で、一番エレガントじゃない方法
@@ -97,23 +97,7 @@ Resources:
       KeyName: shivaq01Test
 
       # ▼ CFN-Init を使わない場合
-      UserData:
-        "Fn::Base64":
-          !Sub |
-            #!/bin/bash
-            yum install httpd php mysql php-mysql -y
-            yum update -y
-            chkconfig httpd on
-            service httpd start
-            cd /var/www/html
-            wget https://wordpress.org/latest.tar.gz
-            tar -zxvf latest.tar.gz --strip 1
-            rm latest.tar.gz
-            cp wp-config-sample.php wp-config.php
-            sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php
-            sed -i 's/localhost/${DB.Endpoint.Address}/g' wp-config.php
-            sed -i 's/username_here/${DatabaseUser}/g' wp-config.php
-            sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
+
 
       # ▼ CFN-Init を使う場合
       UserData:
@@ -145,8 +129,6 @@ Resources:
         configure_cfn:
           files:
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
-              # triggers=post.update →スタックがアップデートされたら、
-              # action= →このアクションを実行 →cfn-init の このスタックこのリソースこのconfigsets...
               content: !Sub |
                 [cfn-auto-reloader-hook]
                 triggers=post.update
@@ -157,9 +139,6 @@ Resources:
               group: root
             # cfn-hup →リソースメタデータの変更を検出し、指定された操作を実行するデーモン
             /etc/cfn/cfn-hup.conf:
-              # hooks.d フォルダ内の content に基いて、
-              # スタック情報を、5分毎にポーリング。変化があったら
-              # [cfn-auto-reloader-hook] の triggers=post.update に従い、action が実行される
               content: !Sub |
                 [main]
                 stack=${AWS::StackId}
@@ -177,7 +156,6 @@ Resources:
               cfn-hup:
                 enabled: "true"
                 ensureRunning: "true"
-                # 下記ファイルに変更がなされると、cfn-hup が再起動する
                 files:
                   - "/etc/cfn/cfn-hup.conf"
                   - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
@@ -235,29 +213,3 @@ Resources:
 #
 # ▼ ロジカル ID →MyEC2
 #   スタックのライフサイクルの間変更されない
-
-
-# ▼ UserData と CfnInit との違い
-# ・UserData
-#   - procedural steps A ->B ->C
-#   - 管理が面倒
-#   - OS や Distribution を指定して行う
-# ・CloudFormationInit
-#   - desired-state エンジン。手続き的ではない
-#   - cfn-init プロセスにディレクティブを渡す
-#   - OS インディペンデント であろうとする
-#   - Config セットをサポート
-#   - 順番指定がいい感じ
-#   - タイミングの管理ができるケースも有る
-#   - S3 などのエンドポイントに対する認証も使える
-#   - S3 や HTTP、HTTPS、GitHub から ファイルやフォルダを作成できる
-#   - 冪等性を保証
-
-
-# ▼ /var/log/cloud-init.log
-# UserData ブロックの実行結果を出力
-# ▼ /var/log/cfn-init-log
-# /var/log/cfn-init-log を見ると、commands の各ステップの完了状況が出力されている
-# CloudFormation::Init プロセスの出力
-▼ cfn-hup.log
-Cfn-Hup プロセスの出力
