@@ -23,16 +23,24 @@ Parameters:
   DatabaseName:
     Type: String
     Default: wordpress
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*" # start with a letter, only alphanumeric characters - new for this lesson
   DatabaseUser:
     Type: String
+    # SQL インジェクションを防止するためにも、文字列の長さを制限する
+    MinLength: 1
+    MaxLength: 16
     Default: wordpress
+    # SQL インジェクション を防止するためにも、); とかを使えないようにする。
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*" # start with a letter, only alphanumeric characters - new for this lesson
   DatabasePassword:
     Type: String
-    Default: w0rdpr4497
+    MinLength: 8
+    MaxLength: 41
+    Default: w0rdpr355
     NoEcho: true
-  TestString:
-    Type: String
-    Default: test9
+    AllowedPattern: "[a-zA-Z0-9]*" # Must only contain alphanumeric characters - new for this lesson
 
   # 再利用案2：そこそこエレガントな方法
 Mappings:
@@ -65,18 +73,50 @@ Mappings:
       "AMALINUX" : "ami-bfe0eadb" # AMALINUX SEP 2016 v01
     ap-northeast-1:
       "AMALINUX" : "ami-a77c30c1" # AMALINUX SEP 2016
-
+  InstanceSize:
+    SMALL:
+      "EC2" : "t2.micro"
+      "DB" : "db.t2.micro"
+    MEDIUM:
+      "EC2" : "t2.small"
+      "DB" : "db.t2.small"
+    LARGE:
+      "EC2" : "t2.medium"
+      "DB" : "db.r3.xlarge"
 Resources:
   DB:
     Type: "AWS::RDS::DBInstance"
+    Condition: isntLarge # added - only create the MySQL DB if its small/med
+    DeletionPolicy: Snapshot
     Properties:
       AllocatedStorage: 5
       StorageType: gp2
-      DBInstanceClass: !FindInMap [EnvSize, !Ref EnvironmentSize, DB]
-      DBName: !Ref DatabaseName
+      DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB] # Dynamic mapping + Pseudo Parameter
+      DBName: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseName]
       Engine: MySQL
-      MasterUsername: !Ref DatabaseUser
-      MasterUserPassword: !Ref DatabasePassword
+      StorageType: gp2
+      MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
+      MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
+      DBSnapshotIdentifier: !If [isRestore, !Ref SnapToRestore, !Ref "AWS::NoValue"]
+  DBAuroraCluster:
+    Type: "AWS::RDS::DBCluster"
+    DeletionPolicy: Snapshot
+    Condition: isLarge # only create if its a large EnvironmentSize
+    Properties:
+      # リストア時にここを指定すると、下記エラー
+      # DBName must be null when Restoring for this Engine.
+      DatabaseName: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseName]
+      Engine: aurora
+      MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
+      MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
+      SnapshotIdentifier: !If [isRestore, !Ref SnapToRestore, !Ref "AWS::NoValue"]
+  DBAurora:
+    Type : "AWS::RDS::DBInstance"
+    Condition: isLarge # only create if its a large EnvironmentSize
+    Properties:
+      DBClusterIdentifier: !Ref DBAuroraCluster
+      Engine: aurora
+      DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB]
 
   MyEC2:
     Type: AWS::EC2::Instance
@@ -190,6 +230,27 @@ Resources:
               #           database_name_here を DatabaseName と置換する
               # sed -i 's/database_name_here/${DatabaseName}/g'
                 sed -i 's/localhost/${DB.Endpoint.Address}/g' wp-config.php
+
+
+
+
+            02_inject_dbhost:
+              cwd: "/var/www/html/wordpress"
+              # isntLarge の場合 →最初の!Sub ブロック。
+              # それ以外の場合 →2つ目の !Sub ブロックを実行
+              command: !If
+                - isntLarge
+                - !Sub |
+                #           database_name_here を DatabaseName と置換する
+                # sed -i 's/database_name_here/${DatabaseName}/g'
+                  sed -i 's/localhost/${DB.Endpoint.Address}/g' wp-config.php
+                - !Sub |
+                  sed -i 's/localhost/${DBAuroraCluster.Endpoint.Address}/g' wp-config.php
+
+
+
+
+
             03_inject_dbname:
               cwd: "/var/www/html/wordpress"
               command: !Sub |
@@ -205,11 +266,36 @@ Resources:
 
 
 
+            06_store_instance_ip:
+              cwd: "/var/www/html/wordpress"
+              command: "curl http://169.254.169.254/latest/meta-data/public-ipv4 > ip.address"
+            07a_inject_IP_1: # this allows a restore & change of IP without causing WP errors.
+              cwd: "/var/www/html/wordpress"
+              command: !Sub |
+                myip=`cat ip.address` && echo "define('WP_SITEURL', 'http://${!myip}/wordpress');" >> wp-config.php
+            07b_inject_IP_2: # this allows a restore & change of IP without causing WP errors.
+              cwd: "/var/www/html/wordpress"
+              command: !Sub |
+                myip=`cat ip.address` && echo "define('WP_HOME', 'http://${!myip}/wordpress');" >> wp-config.php
+            08a_update_theme_1:
+              cwd: "/var/www/html/wordpress"
+              command: !Sub |
+                myip=`cat ip.address` && echo "update_option('siteurl','http://${!myip}/wordpress');" >> /var/www/html/wordpress/wp-content/themes/twentyseventeen/functions.php
+            08a_update_theme_2:
+              cwd: "/var/www/html/wordpress"
+              command: !Sub |
+                myip=`cat ip.address` && echo "update_option('home','http://${!myip}/wordpress');" >> /var/www/html/wordpress/wp-content/themes/twentyseventeen/functions.php
+
+
+
+
   S3:
     Type: "AWS::S3::Bucket"
-
-# ▼ 物理 ID  →i-xxxxx
-#   スタックのライフサイクル の間にしばしば変更される
-#
-# ▼ ロジカル ID →MyEC2
-#   スタックのライフサイクルの間変更されない
+    # DeletionPolicy: Retain
+Outputs:
+  wproot:
+    Description: Access URL for wordpress
+    Value: !Join ["", ["http://", !GetAtt EC2.PublicIp, "/wordpress"]]
+  wpadmin:
+    Description: Admin Login URL - if restoring from snap, always go to this URL first
+    Value: !Join ["", ["http://", !GetAtt EC2.PublicIp, "/wordpress/wp-login.php"]]

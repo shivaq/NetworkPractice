@@ -1,0 +1,45 @@
+/*
+1.CFNStack Role みたいな感じのロールを作成
+2.Select Role Type で、AWS CloudFormation Role を選択
+3.AdministratorAccess を割り当てる
+4.スタック作成時の Options セクションで、作成しておいた Role を選択
+ →このスタックを実行する時は、上記ロールに割り当てられた権限を使用することができる
+
+A.オペレータ用ロールを作成
+B.下記Json を使ってオペレータ用のポリシーを作成
+C.オペレータロールに上記ポリシーをアタッチ
+D.
+*/
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Stmt1478055099000",
+            "Effect": "Allow",
+            "Action": [
+                "cloudformation:CreateUploadBucket",
+                "cloudformation:GetTemplateSummary",
+                "cloudformation:CreateStack",
+                "cloudformation:DeleteStack",
+                "cloudformation:DescribeStacks",
+                "cloudformation:UpdateStack",
+                "cloudformation:ListStacks",
+                "cloudformation:ListStackResources",
+                "cloudformation:DescribeStackEvents",
+                "cloudformation:CreateChangeSet",
+                "cloudformation:GetTemplate",
+                "cloudformation:GetStackPolicy",
+                "cloudformation:ListChangeSets",
+                "cloudformation:DescribeChangeSet",
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:CreateBucket",
+                "iam:ListRoles"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}

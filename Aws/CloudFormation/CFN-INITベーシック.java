@@ -355,63 +355,84 @@ CREATE_IN_PROGRESS
 // 他のAWSサービスと交信して、サービスを作成
 -------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-6：37 まで
-
 ▼ cfn-init の成否を、CREATE_COMPLETE に遷移するかどうかに反映させる方法
 -------------------------------------------------
 cfn-init の成否を見届けてから、cfn-signal を CreationPolicy に送り、
 CREATE_COMPLETE に状態を遷移するかどうかを判断するスニペット
 -------------------------------------------------
-EC2:
-  Type: "AWS::EC2::Instance"
-  Properties:
-    ...
-    UserData:
-    "Fn::Base64":
-      !Sub |
-        #!/bin/bash
+        EC2:
+          Type: "AWS::EC2::Instance"
+          Properties:
+          ...
+            UserData:
+              "Fn::Base64":
+                !Sub |
+                  #!/bin/bash
+                  // 前提条件
+                  // そもそも、この UserData セクションは、!Sub とともに記述されているため、
+                  // このスタックが一通り完了した後で走る。
 
-        // 前提条件
-        // そもそも、この UserData セクションは、!Sub とともに記述されているため、
-        // このスタックが一通り完了した後で走る。
+                  yum update -y aws-cfn-bootstrap
 
+                  // コード1: 下記 cfn-init のコンフィグセットの実行を行う
+                  /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets wordpress --region ${AWS::Region}
+                  yum -y update
 
-        // コード1: 下記 cfn-init のコンフィグセットの実行を行う
-        /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets wordpress --region ${AWS::Region}
-
-        // コード2: スタックに戻って、c、
-        //$? →直前のコマンドの返り値（0 が成功。失敗はプログラムによって値が変わる。-1 が多い）
-        // cfn-signal から、cfn-init コマンドの成否の返り値、スタック名、リソース、リージョンといった情報を、
-        /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}
-        // 下記 CreationPolicy > ResourceSignal ブロックに渡す。
-        // その結果により、CREATE_IN_PROGRESS から 成功または失敗ステートに遷移していく
-  CreationPolicy:
-    ResourceSignal:
-    // もしも cfn-signal が UserData プロパティ内になかったら、
-    // UserData の処理が成功しても、CREATE_COMPLETE に遷移せず、CFn がTimeoutまでハングする
-    // ※ cfn-init-log 及び cloud-init-log ファイルを見れば、プロセスの結果がわかります
-      Count: "1"// CFNが CREATE_COMPLETE と認識するのに必要な、受信するシグナルの数。
-      // AutoScaling の時などは、一つじゃ足りない
-      Timeout: PT15M // リソースからのシグナルを待つ時間(分)。成功か失敗か。時間が過ぎたら失敗とする。
+                  // コード2:
+                  // cfn-signalの引数を CreationPolicy > ResourceSignal ブロックに渡す。
+                  // 渡すのは
+                  //$? →直前のコマンドの返り値、スタック名、リソース名、リージョン
+                  // その結果により、CREATE_IN_PROGRESS から 成功または失敗ステートに遷移していく
+                  /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}
+          CreationPolicy:
+            ResourceSignal:
+            // もしも cfn-signal が UserData プロパティ内になかったら、
+            // UserData の処理が成功しても、CREATE_COMPLETE に遷移せず、CFn がTimeoutまでハングする
+            // ※ cfn-init-log 及び cloud-init-log ファイルを見れば、プロセスの結果がわかります
+              Count: "1"// CFNが CREATE_COMPLETE と認識するのに必要な、受信するシグナルの数。
+              // AutoScaling の時などは、一つじゃ足りない
+              Timeout: PT15M// リソースからのシグナルを待つ時間(分)。成功か失敗か。時間が過ぎたら失敗とする。
+              Metadata:
+                AWS::CloudFormation::Init:
+                  configSets:
+                    wordpress:
+                      - "configure_cfn"
+                      - "install_wordpress"
+                      - "config_wordpress"
 -------------------------------------------------
 ・AutoScaling グループ内に CreationPolicy を定義する場合、
 Count: 1 ではなく、オートスケーリング時に必要なインスタンス数を指定する。
 -------------------------------------------------
 
 
-金たん 4200
-もも 2400
-肉まん 3450
-花 8950
+
+▼ スタック Deletion Policy
+-------------------------------------------------
+・リソースごとに定義できる
+・**Delete**, Retain, Snapshot の三択
+-------------------------------------------------
+EC2:
+  Type: "AWS::EC2::Instance"
+  DeletionPolicy: Delete
+
+・デフォルト
+-------------------------------------------------
+DB:
+  Type: "AWS::RDS::DBInstance"
+  DeletionPolicy: Snapshot
+
+・デフォルトでスナップショット取得のリソース →DBCluster と クラスタID を指定していない DBInstance
+・対応リソース
+AWS::EC2::Volume、AWS::ElastiCache::CacheCluster、AWS::ElastiCache::ReplicationGroup、AWS::RDS::DBInstance、AWS::RDS::DBCluster、および AWS::Redshift::Cluster
+-------------------------------------------------
+
+S3:
+  Type: "AWS::S3::Bucket"
+  DeletionPolicy: Retain
+
+・無自覚に使うと、スタック削除のたびに、使わないリソースが増えていく
+・EC2 インスタンスを Retain にして、紐付いている VPC は Delete だと、スタック削除失敗になる
+-------------------------------------------------
+
+
+-------------------------------------------------
