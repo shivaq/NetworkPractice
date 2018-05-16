@@ -1,20 +1,60 @@
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups: # パラメータグループを使うと、任意の順番で表示できる
+      -
+        Label:
+          default: "Shared Infrastructure Details"
+        Parameters:
+          - VPCID
+          - PUBLICRT
+          - PRIVATERTA
+          - PRIVATERTB
+          - APPBucketURL
+      -
+        Label:
+          default: "App Environment Networking"
+        Parameters:
+          - APPPublicCIDRA
+          - APPPublicCIDRB
+          - APPPrivateCIDRA
+          - APPPrivateCIDRB
+      -
+        Label:
+          default: "App Environment Configuration"
+        Parameters:
+          - ENVIRONMENT
+          - APPVERSION
+
+    ParameterLabels:
+      VPCID:
+        default: "VPC to deploy into" # ロジカルID の代わりに、この文字列がラベルになる
+
 # Parameters セクション コンソールの"詳細の指定" で選択
 #  →Resources value の !Ref で参照してる
 
-# 要入力項目、デフォルト値、リスト、制約をセットできる
-# コンソール上でスタックを作成または更新する際、
-# デフォルト値や、デフォルトリスト、制約を設定できる。
-#
-# どんな場合に使うか？
-# 規定の範囲で何度も作成する場合。
-  
+# パラメータの表示順は、アルファベット順になる
 Parameters:
   SecurityGroupDescription:
     Description: Security Group Description (Simple parameter)
     Type: String
 
-
-
+# List<Number> – An array of integers or floats
+# CommaDelimitedList – An array of literal strings that are separated by commas
+# AWS::EC2::AvailabilityZone::Name
+# AWS::EC2::Instance::Id
+# AWS::EC2::Image::Id
+# AWS::EC2::SecurityGroup::GroupName
+# AWS::EC2::Volume::Id
+# AWS::Route53::HostedZone::Id
+# List<AWS::EC2::AvailabilityZone::Name>
+# List<AWS::EC2::Instance::Id>
+# List<AWS::EC2::Image::Id>
+# List<AWS::EC2::SecurityGroup::GroupName>
+# List<AWS::EC2::Volume::Id>
+# List<AWS::Route53::HostedZone::Id>
+  VPCID:
+    Type: AWS::EC2::VPC::Id # タイプを、AWS サービスで指定
+    Description: Shared Infrastructure VPC to use
 
   SecurityGroupPort:
     Description: Simple Description of a Number Parameter, with MinValue and MaxValue

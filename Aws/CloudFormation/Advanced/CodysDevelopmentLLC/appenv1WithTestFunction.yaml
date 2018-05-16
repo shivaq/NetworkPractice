@@ -1,0 +1,317 @@
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "App Environment Configuration"
+        Parameters:
+          - ENVIRONMENT
+          - APPVERSION
+          - MinSize
+          - MaxSize
+          - DesiredCapacity
+Parameters:
+  APPVERSION:
+    Type: String
+    Description: Application Version to Deploy
+    Default: "1"
+  ENVIRONMENT:
+    Type: String
+    Description: Type of environment to provision
+    Default: DEV
+    AllowedValues:
+      - DEV
+      - TEST
+      - PROD
+      - PRESALES
+  MinSize:
+    Type: String
+    Description: Minimum number of app servers
+    Default: "1"
+  MaxSize:
+    Type: String
+    Description: Maximum number of app servers (Desired x 2)
+    Default: "2"
+  DesiredCapacity:
+    Type: String
+    Description: Nominal Size of APP Env
+    Default: "1"
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      "AMALINUX" : "ami-c481fad3" # AMALINUX SEP 2016
+    us-east-2:
+      "AMALINUX" : "ami-71ca9114" # AMALINUX SEP 2016
+    us-west-1:
+      "AMALINUX" : "ami-de347abe" # AMALINUX SEP 2016
+    us-west-2:
+      "AMALINUX" : "ami-b04e92d0" # AMALINUX SEP 2016
+    ca-central-1:
+      "AMALINUX" : "ami-eb20928f" # AMALINUX SEP 2016 v01
+    eu-west-1:
+      "AMALINUX" : "ami-d41d58a7" # AMALINUX SEP 2016
+    eu-central-1:
+      "AMALINUX" : "ami-0044b96f" # AMALINUX SEP 2016
+    eu-west-2:
+      "AMALINUX" : "ami-bfe0eadb" # AMALINUX SEP 2016 v01
+    ap-southeast-1:
+      "AMALINUX" : "ami-7243e611" # AMALINUX SEP 2016
+    ap-southeast-2:
+      "AMALINUX" : "ami-55d4e436" # AMALINUX SEP 2016
+    ap-northeast-2:
+      "AMALINUX" : "ami-a04297ce" # AMALINUX SEP 2016
+    ap-northeast-1:
+      "AMALINUX" : "ami-1a15c77b" # AMALINUX SEP 2016
+    ap-south-1:
+      "AMALINUX" : "ami-cacbbea5" # AMALINUX SEP 2016
+    sa-east-1:
+      "AMALINUX" : "ami-b777e4db" # AMALINUX SEP 2016
+  InstanceSize:
+    DEV:
+      "EC2" : "t2.micro"
+    TEST:
+      "EC2" : "t2.micro"
+    PROD:
+      "EC2" : "t2.small"
+    PRESALES:
+      "EC2" : "t2.micro"
+Resources:
+  # autosubnet スタックを走らせて、CIDR レンジ等を取得する
+  AutoSubnetCustomResource:
+    # カスタムリソースタイプ！
+    Type: "Custom::LambdaAutoSubnet" # or AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !ImportValue sharedinf-autosubnetarn # The ARN of the lambda function - only mandatory property
+      # "Provider Defined Properties" Below..
+      DynamoDBRegion: !Ref "AWS::Region"
+      DynamoDBTable: !ImportValue sharedinf-autosubnetddbtablename
+      VPCCidr: !ImportValue sharedinf-vpciprange
+      Debug: "True"
+  AutoScalingGroup:
+    CreationPolicy: # WillReplace が TRUEなので、アップデートのたびにここが走る
+      ResourceSignal:
+        Count: !Ref DesiredCapacity # CREATION_SUCCESS に必要なシグナルの数
+        Timeout: "PT5M"
+    UpdatePolicy:
+      # LaunchConfiguration を変更すると適用される
+      AutoScalingReplacingUpdate:
+        # Auto Scaling グループとそこに含まれるインスタンスが更新時に置き換えられるかどうかを指定
+        WillReplace: true # 更新に失敗 →ロールバック
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      # 規模の拡大や縮小の完了後、次の規模の拡大や縮小が開始できるようになるまでの秒数
+      Cooldown: "300"
+      DesiredCapacity: !Ref DesiredCapacity
+      # 新しい EC2 インスタンスがサービス状態になってから、Auto Scaling がヘルスチェックを開始するまでの秒数。
+      HealthCheckGracePeriod: "300"
+      # ヘルスステータスを取得するサービス
+      HealthCheckType: ELB # or EC2
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      LoadBalancerNames:
+        - !Ref ELB
+      MaxSize: !Ref MaxSize
+      MinSize: !Ref MinSize
+      VPCZoneIdentifier:
+        - !Ref SubnetPrivateA
+        - !Ref SubnetPrivateB
+  # EC2: # for now this is in a public subnet, needs to be changed.
+  #   Type: "AWS::EC2::Instance"
+  #   DeletionPolicy: Delete
+  #   CreationPolicy: # CreationPolicy は更新時には走らない。
+  #   # よってテストが失敗しても、ロールバックは起きない
+  #     ResourceSignal:
+  #       Timeout: PT5M
+  #   Properties:
+  #     ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX] # Dynamic mapping + Pseudo Parameter
+  #     InstanceType: !FindInMap [InstanceSize, !Ref ENVIRONMENT, EC2]
+  #     KeyName: AdvancedCFN
+  #     SecurityGroupIds:
+  #       - !Ref SG
+  #     SubnetId: !Ref SubnetPublicA
+
+
+  LaunchConfiguration:
+    # Auto Scaling グループがグループ内の Amazon EC2 インスタンスの設定に使用する
+     # Auto Scaling 起動設定を作成
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
+      InstanceType: !FindInMap [InstanceSize, !Ref ENVIRONMENT, EC2]
+      KeyName: AdvancedCFN
+      SecurityGroups:
+        - !Ref SG
+      UserData:
+        "Fn::Base64":
+          !Sub |
+            #!/bin/bash
+            yum update -y aws-cfn-bootstrap # good practice - always do this.
+            # AWS::CloudFormation::Init を走らせる
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets www --region ${AWS::Region}
+            yum -y update
+
+            # ここで、テストを定義したコードを走らせる
+            # 本インスタンス自身の app.php を出力
+            #  →grep -f で、Obtain patterns from file, one per line.
+            # 結果が空なら
+            curl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern
+            # CFn コンプリートによって、テスト成否を表している。
+            # 直前実行したコマンドの終了値（0は成功、1は失敗）
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          www:
+            - "configure_cfn"
+            - "install_www"
+            - "config_app"
+        configure_cfn:
+          files:
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.LaunchConfiguration.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchConfiguration --configsets www --region ${AWS::Region}
+              mode: "000400"
+              owner: root
+              group: root
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                verbose=true
+                interval=5
+              mode: "000400"
+              owner: root
+              group: root
+          services: # インスタンス起動時に 有効化/無効化するサービスを定義
+            sysvinit: # Linux では上記を sysvinit を使用してサポート
+              cfn-hup: # tail -f /var/log/cfn-hup.log で進捗確認できる
+                enabled: "true" # 起動時にサービスが自動的に開始
+                ensureRunning: "true" # cfn-init が終了した後でサービスが実行
+                files:
+                  - "/etc/cfn/cfn-hup.conf"
+                  - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+        install_www:
+          packages:
+            yum:
+              httpd: []
+              php: []
+          services:
+            sysvinit:
+              httpd:
+                enabled: "true"
+                ensureRunning: "true"
+        config_app:
+          # APPVERSION が更新されると、cfn-auto-reloader.conf に従って、
+          # 該当ファイルが S3 から再読込される
+          sources: # ディレクトリのリスト
+            # App.zip をダウンロード
+            /var/www/html: !Join ["",[!Ref APPBucketURL, "/App", !Ref APPVERSION, ".zip"]]
+          files: # 	EC2 インスタンス上にファイルを作成
+            /var/www/html/test.pattern.zip:
+              # ファイルの読み込み元の URL
+              source: !Join ["",[!Ref APPBucketURL, "/Test", !Ref APPVERSION, ".zip"]]
+              mode: "000644"
+              owner: "root"
+              group: "root"
+          commands:
+            unzippattern: # 名前のアルファベット順に処理される
+              # zip 不ファイルを解凍
+              cwd: "/var/www/html" # 作業ディレクトリ
+              command: "unzip -o test.pattern.zip"
+  SubnetPublicA: # Public Subnet for App Env in AZ - A
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      # Lambda が返す カスタムリソースから取得
+      CidrBlock: !GetAtt AutoSubnetCustomResource.AppPublicCIDRA
+      MapPublicIpOnLaunch: true
+      VpcId: !ImportValue sharedinf-vpcid
+  SubnetPrivateA: # Private Subnet for App Env in AZ - A
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !GetAtt AutoSubnetCustomResource.AppPrivateCIDRA
+      MapPublicIpOnLaunch: false
+      VpcId: !ImportValue sharedinf-vpcid
+  SubnetPublicB: # Public Subnet for App Env in AZ - B  (not used yet)
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !GetAtt AutoSubnetCustomResource.AppPublicCIDRB
+      MapPublicIpOnLaunch: true
+      VpcId: !ImportValue sharedinf-vpcid
+  SubnetPrivateB: # Private Subnet for App Env in AZ - B (not used yet)
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !GetAtt AutoSubnetCustomResource.AppPrivateCIDRB
+      MapPublicIpOnLaunch: false
+      VpcId: !ImportValue sharedinf-vpcid
+  SubnetRouteTableAssociatePublicA: # Associates the subnet with a route table - passed via import
+    DependsOn: SubnetPublicA
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !ImportValue sharedinf-publicrt
+      SubnetId: !Ref SubnetPublicA
+  SubnetRouteTableAssociatePublicB: # Associates the subnet with a route table - passed via import
+    DependsOn: SubnetPublicB
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !ImportValue sharedinf-publicrt
+      SubnetId: !Ref SubnetPublicB # Associates the subnet with a route table - passed via import
+  SubnetRouteTableAssociatePrivateA: # Associates the subnet with a route table - passed via parameter
+    DependsOn: SubnetPrivateA
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !ImportValue sharedinf-privaterta
+      SubnetId: !Ref SubnetPrivateA # Associates the subnet with a route table - passed via parameter
+  SubnetRouteTableAssociatePrivateB: # Associates the subnet with a route table - passed via parameter
+    DependsOn: SubnetPrivateB
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !ImportValue sharedinf-privatertb
+      SubnetId: !Ref SubnetPrivateB # Associates the subnet with a route table - passed via parameter
+  ELB:
+    Type: "AWS::ElasticLoadBalancing::LoadBalancer"
+    Properties:
+      CrossZone: true
+      Listeners:
+        -
+          InstancePort: "80"
+          InstanceProtocol: HTTP
+          LoadBalancerPort: "80"
+          Protocol: HTTP
+      Subnets:
+        - !Ref SubnetPublicA
+        - !Ref SubnetPublicB
+      SecurityGroups:
+        - !Ref SG
+  SG:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " Application V", !Ref APPVERSION, " - ", !Ref ENVIRONMENT]]
+      VpcId: !ImportValue sharedinf-vpcid
+      SecurityGroupIngress:
+        -
+          CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          ToPort: "80"
+          FromPort: "80"
+        -
+          CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          ToPort: "22"
+          FromPort: "22"
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          ToPort: "-1"
+          IpProtocol: "-1"
+Outputs:
+  Endpoint:
+    Description: Application Address
+    Value: !Join ["", ["http://", !GetAtt ELB.DNSName, "/app.php"]]
