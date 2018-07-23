@@ -1,0 +1,116 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Launches a function that automates EC2 Keypair Generation
+Parameters:
+  FunctionDescription:
+    Type: String
+    Default: Lambda function that automates EC2 Keypair generation
+  FunctionFileName:
+    Type: String
+  FunctionVersion:
+    Type: String
+  StackOutputsArn:
+    Type: String
+################# Resources #################
+Resources:
+################# Custom Resource #################
+  EnvironmentNew:
+    Type: Custom::StackOutputs
+    Properties:
+      ServiceToken:
+        Ref: StackOutputsArn
+      StackName: environment
+################# Role #################
+  LambdaFunctionRoleNew:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource:
+            - arn:aws:logs:*:*:*
+      - PolicyName: CreateEC2KeyPair
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ec2:CreateKeyPair
+            - ec2:DeleteKeyPair
+            Resource:
+            - "*"
+      - PolicyName: DescribeAndPutObjectKeypairBucket
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: s3:*
+            Resource:
+            - Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - Fn::GetAtt:
+                  - EnvironmentNew
+                  - KeyBucket
+            - Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - Fn::GetAtt:
+                  - EnvironmentNew
+                  - KeyBucket
+                - "/*"
+################# Function #################
+  LambdaFunctionToken:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description:
+        Ref: FunctionDescription
+      Runtime: nodejs4.3
+      MemorySize: '128'
+      Timeout: '10'
+      Handler: index.handler
+      Role: !GetAtt LambdaFunctionRoleNew.Arn
+      Code:
+        S3Bucket: !GetAtt EnvironmentNew.ResourceBucket
+        S3Key:
+          Fn::Join:
+          - ''
+          - - lambda/
+            - Ref: FunctionFileName
+            - _
+            - Ref: FunctionVersion
+            - ".zip"
+################# Outputs #################
+Outputs:
+  KeyPair:
+    Description: Retrieve EC2 Keypair Generator Function Name
+    Value:
+      Ref: LambdaFunctionToken
+  KeyPairArn:
+    Description: Retrieve EC2 Keypair Generator Function ARN
+    Value:
+      Fn::Join:
+      - ''
+      - - 'arn:aws:lambda:'
+        - Ref: AWS::Region
+        - ":"
+        - Ref: AWS::AccountId
+        - ":function:"
+        - Ref: LambdaFunctionToken
